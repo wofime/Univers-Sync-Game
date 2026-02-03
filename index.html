@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Univers Sync Game</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding: 20px; }
+        input { padding: 10px; border-radius: 5px; border: none; margin: 10px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #status { color: #aaa; margin: 20px; font-style: italic; }
+        .box { border: 1px solid #333; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>✨ Univers Sync</h1>
+    
+    <div class="box">
+        <p>Ton ID : <strong id="my-id">Chargement...</strong></p>
+        <input type="text" id="join-id" placeholder="ID de ton ami">
+        <button onclick="connecter()">Rejoindre l'ami</button>
+    </div>
+
+    <div id="status">En attente de connexion...</div>
+
+    <div id="game" style="display:none;">
+        <input type="text" id="word-input" placeholder="Tape ton univers...">
+        <button onclick="envoyerMot()">Valider</button>
+        <p id="resultat"></p>
+    </div>
+
+    <script>
+        var peer = new Peer(); 
+        var conn;
+        var monMot = "";
+        var motAmi = "";
+
+        // 1. Affiche ton ID quand il est créé
+        peer.on('open', (id) => {
+            document.getElementById('my-id').innerText = id;
+        });
+
+        // 2. Écoute si quelqu'un se connecte à TOI
+        peer.on('connection', (c) => {
+            conn = c;
+            setupChat();
+        });
+
+        // 3. Fonction pour se connecter à l'ID de l'ami
+        function connecter() {
+            var targetId = document.getElementById('join-id').value;
+            conn = peer.connect(targetId);
+            setupChat();
+        }
+
+        function setupChat() {
+            document.getElementById('status').innerText = "Connecté !";
+            document.getElementById('game').style.display = "block";
+            
+            conn.on('data', (data) => {
+                motAmi = data.toLowerCase().trim();
+                verifierSync();
+            });
+        }
+
+        function envoyerMot() {
+            monMot = document.getElementById('word-input').value.toLowerCase().trim();
+            conn.send(monMot);
+            document.getElementById('resultat').innerText = "Attente de l'autre joueur...";
+            verifierSync();
+        }
+
+        function verifierSync() {
+            if (monMot !== "" && motAmi !== "") {
+                if (monMot === motAmi) {
+                    document.getElementById('resultat').innerHTML = "✅ <strong>SYNCHRO !</strong> L'univers est '" + monMot + "'";
+                } else {
+                    document.getElementById('resultat').innerText = "❌ Pas encore... Lui a dit autre chose !";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
