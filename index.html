@@ -3,121 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sync Game - 2 Joueurs</title>
+    <title>Sync Challenge - Révélation</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
-        .container { width: 100%; max-width: 500px; }
-        .box { background: #1e293b; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { width: 100%; max-width: 500px; text-align: center; }
+        .box { background: #1e293b; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 15px rgba(0,0,0,0.5); }
         
-        /* Zone de connexion */
-        #setup-box { border: 2px dashed #334155; }
-        .id-display { font-size: 1.2rem; color: #f472b6; background: #020617; padding: 10px; border-radius: 8px; display: inline-block; margin: 10px 0; }
+        /* Zone de Révélation */
+        #reveal-zone { display: flex; justify-content: space-around; margin: 20px 0; min-height: 80px; }
+        .card { background: #020617; padding: 15px; border-radius: 10px; width: 40%; border: 2px solid #334155; }
+        .card.ready { border-color: #4ade80; color: #4ade80; }
+        .word-text { font-size: 1.2rem; font-weight: bold; margin-top: 5px; }
 
-        /* Zone de chat/jeu */
-        #chat { height: 350px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 10px; border: 1px solid #334155; border-radius: 10px; background: #020617; margin-bottom: 15px; }
-        .msg { padding: 10px 14px; border-radius: 15px; max-width: 85%; line-height: 1.4; }
-        .msg.me { align-self: flex-end; background: #3b82f6; color: white; border-bottom-right-radius: 2px; }
-        .msg.friend { align-self: flex-start; background: #334155; color: #f472b6; border: 1px solid #f472b6; border-bottom-left-radius: 2px; }
-        
-        input { width: calc(100% - 24px); padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 10px; }
-        button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #f472b6; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #db2777; filter: brightness(1.1); }
-        
-        #victory { display: none; color: #4ade80; font-size: 1.8rem; text-align: center; font-weight: bold; margin: 10px 0; animation: bounce 0.6s infinite alternate; }
-        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+        input { width: 80%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 10px; }
+        button { width: 85%; padding: 12px; border-radius: 8px; border: none; background: #f472b6; color: white; font-weight: bold; cursor: pointer; }
+        button:disabled { background: #475569; cursor: not-allowed; }
+
+        #victory-msg { display: none; color: #4ade80; font-size: 2rem; font-weight: bold; margin: 15px; animation: bounce 0.5s infinite alternate; }
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1 style="text-align: center;">🚀 Sync Game</h1>
+        <h1>🚀 Sync Game</h1>
 
         <div id="setup-box" class="box">
-            <p>1. Partage ton ID à ton ami :</p>
-            <div id="my-id" class="id-display">Chargement...</div>
-            <p>2. OU colle l'ID de ton ami ici :</p>
-            <input type="text" id="join-id" placeholder="Code de l'ami...">
-            <button onclick="connecter()">LANCER LA PARTIE</button>
+            <p>ID : <strong id="my-id" style="color: #f472b6;">...</strong></p>
+            <input type="text" id="join-id" placeholder="ID de l'ami...">
+            <button onclick="connecter()">JOUER</button>
         </div>
 
         <div id="game-box" class="box" style="display: none;">
-            <div id="chat"></div>
-            <div id="victory">✨ SYNCHRO ! ✨</div>
-            <input type="text" id="word-input" placeholder="Tape un indice ou un nom...">
-            <button onclick="envoyerMot()">ENVOYER</button>
-            <button onclick="location.reload()" style="background: #475569; margin-top: 20px; font-size: 0.8rem;">Quitter / Relancer</button>
+            <div id="victory-msg">✨ BRAVO ! ✨</div>
+            
+            <div id="reveal-zone">
+                <div id="card-me" class="card">Moi<div class="word-text" id="my-status">...</div></div>
+                <div id="card-friend" class="card">Ami<div class="word-text" id="friend-status">...</div></div>
+            </div>
+
+            <div id="input-area">
+                <input type="text" id="word-input" placeholder="Ton mot secret...">
+                <button id="send-btn" onclick="preparerMot()">VALIDER MON CHOIX</button>
+            </div>
+            
+            <p id="info" style="color: #94a3b8; margin-top: 15px;">Attente des deux joueurs...</p>
         </div>
     </div>
 
     <script>
         const peer = new Peer();
         let conn;
-        let dernierMoi = "";
-        let dernierAmi = "";
+        let monMot = "";
+        let motAmi = "";
+        let prêtMoi = false;
+        let prêtAmi = false;
 
         peer.on('open', (id) => { document.getElementById('my-id').innerText = id; });
 
-        // Cas où tu REÇOIS la connexion
         peer.on('connection', (connection) => {
             conn = connection;
             configurerLien();
-            demarrerInterfaceJeu();
+            document.getElementById('setup-box').style.display = "none";
+            document.getElementById('game-box').style.display = "block";
         });
 
-        // Cas où tu LANCE la connexion
         function connecter() {
-            const targetId = document.getElementById('join-id').value.trim();
-            if (!targetId) return alert("Il faut l'ID de ton ami !");
-            
-            conn = peer.connect(targetId);
+            const id = document.getElementById('join-id').value.trim();
+            conn = peer.connect(id);
             configurerLien();
-            // On attend que la connexion soit ouverte pour changer l'écran
             conn.on('open', () => {
-                demarrerInterfaceJeu();
+                document.getElementById('setup-box').style.display = "none";
+                document.getElementById('game-box').style.display = "block";
             });
         }
 
         function configurerLien() {
             conn.on('data', (data) => {
-                dernierAmi = data.toLowerCase().trim();
-                ajouterAuChat(data, 'friend');
-                verifierVictoire();
+                motAmi = data;
+                prêtAmi = true;
+                document.getElementById('card-friend').classList.add('ready');
+                document.getElementById('friend-status').innerText = "PRÊT";
+                verifierEtReveler();
             });
         }
 
-        function demarrerInterfaceJeu() {
-            // C'est ici que la magie opère : on cache l'un et on montre l'autre
-            document.getElementById('setup-box').style.display = "none";
-            document.getElementById('game-box').style.display = "block";
+        function preparerMot() {
+            monMot = document.getElementById('word-input').value.trim();
+            if (!monMot) return;
+
+            prêtMoi = true;
+            conn.send(monMot); // On envoie le mot à l'autre
+            
+            document.getElementById('send-btn').disabled = true;
+            document.getElementById('card-me').classList.add('ready');
+            document.getElementById('my-status').innerText = "PRÊT";
+            document.getElementById('word-input').value = "";
+            verifierEtReveler();
         }
 
-        function envoyerMot() {
-            const input = document.getElementById('word-input');
-            const mot = input.value.trim();
-            if (!mot) return;
+        function verifierEtReveler() {
+            if (prêtMoi && prêtAmi) {
+                // RÉVÉLATION !
+                document.getElementById('my-status').innerText = monMot;
+                document.getElementById('friend-status').innerText = motAmi;
 
-            dernierMoi = mot.toLowerCase().trim();
-            conn.send(mot);
-            ajouterAuChat(mot, 'me');
-            input.value = "";
-            verifierVictoire();
-        }
+                if (monMot.toLowerCase() === motAmi.toLowerCase()) {
+                    document.getElementById('victory-msg').style.display = "block";
+                }
 
-        function ajouterAuChat(texte, auteur) {
-            const chat = document.getElementById('chat');
-            const div = document.createElement('div');
-            div.classList.add('msg', auteur);
-            div.innerText = texte;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
-        }
-
-        function verifierVictoire() {
-            if (dernierMoi === dernierAmi && dernierMoi !== "") {
-                document.getElementById('victory').style.display = "block";
-            } else {
-                document.getElementById('victory').style.display = "none";
+                // Reset après 3 secondes pour rejouer
+                setTimeout(() => {
+                    prêtMoi = false;
+                    prêtAmi = false;
+                    monMot = "";
+                    motAmi = "";
+                    document.getElementById('send-btn').disabled = false;
+                    document.getElementById('my-status').innerText = "...";
+                    document.getElementById('friend-status').innerText = "...";
+                    document.getElementById('card-me').classList.remove('ready');
+                    document.getElementById('card-friend').classList.remove('ready');
+                    document.getElementById('victory-msg').style.display = "none";
+                }, 4000);
             }
         }
     </script>
