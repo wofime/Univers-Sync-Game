@@ -3,89 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sync Game Simple</title>
+    <title>Sync Fixed</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body { font-family: sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
-        .box { background: #1e293b; padding: 20px; border-radius: 10px; margin: 10px auto; max-width: 400px; }
-        input { padding: 10px; border-radius: 5px; border: none; width: 70%; margin: 5px; }
-        button { padding: 10px; cursor: pointer; background: #f472b6; border: none; color: white; border-radius: 5px; }
-        #chat-zone { position: fixed; right: 0; top: 0; width: 200px; height: 100%; background: #020617; display: none; padding: 10px; font-size: 0.8rem; }
+        .box { background: #1e293b; padding: 20px; border-radius: 10px; margin: 10px auto; max-width: 400px; border: 1px solid #334155; }
+        input { padding: 10px; border-radius: 5px; border: none; width: 70%; margin: 5px; background: #020617; color: white; }
+        button { padding: 10px; cursor: pointer; background: #f472b6; border: none; color: white; border-radius: 5px; font-weight: bold; }
+        button:disabled { background: #475569; opacity: 0.5; }
+        .status { font-size: 1.2rem; margin: 15px; color: #94a3b8; }
     </style>
 </head>
 <body>
 
     <div id="setup" class="box">
-        <h3>1. Ton pseudo</h3>
-        <input type="text" id="my-name" placeholder="Ex: lucas">
-        <button onclick="creerPartie()">Créer</button>
-        <hr>
-        <h3>2. Rejoindre un ami</h3>
-        <input type="text" id="friend-name" placeholder="Pseudo de l'ami">
-        <button onclick="rejoindrePartie()">Rejoindre</button>
+        <h3>Pseudo :</h3>
+        <input type="text" id="my-name" placeholder="Ton pseudo">
+        <button onclick="init(true)">Créer</button>
+        <p>OU</p>
+        <input type="text" id="friend-name" placeholder="Pseudo ami">
+        <button onclick="init(false)">Rejoindre</button>
     </div>
 
     <div id="game" class="box" style="display:none;">
-        <h2 id="win" style="color:lime; display:none;">✨ SYNCHRO !</h2>
-        <div style="display:flex; justify-content:space-around;">
-            <div>Moi<div id="status-me">...</div></div>
-            <div>Lui<div id="status-him">...</div></div>
+        <div id="win" style="color:#4ade80; display:none; font-weight:bold; font-size:1.5rem;">✨ SYNCHRO !</div>
+        <div style="display:flex; justify-content:space-around; margin-top:20px;">
+            <div>MOI<div id="s-me" style="font-weight:bold; color:#3b82f6;">...</div></div>
+            <div>LUI<div id="s-him" style="font-weight:bold; color:#f472b6;">...</div></div>
         </div>
         <br>
-        <input type="text" id="word" placeholder="Mot secret...">
-        <button onclick="valider()">OK</button>
-    </div>
-
-    <button onclick="document.getElementById('chat-zone').style.display='block'" style="position:fixed; bottom:10px; right:10px;">Chat</button>
-    <div id="chat-zone">
-        <div id="msgs" style="height:80%; overflow-y:auto;"></div>
-        <input type="text" id="msg-in" style="width:80%" onchange="sendChat(this.value); this.value=''">
+        <input type="text" id="word" placeholder="Tape ton mot...">
+        <button id="send-btn" onclick="valider()">OK</button>
     </div>
 
     <script>
-        let peer, conn, monMot, motAmi, pretMoi, pretLui;
+        let peer, conn, monMot, motAmi, pretMoi = false, pretLui = false;
 
-        function initPeer(id) {
-            peer = new Peer(id); // On force l'ID avec ton pseudo
-            peer.on('connection', c => { conn = c; setupConn(); });
-            peer.on('error', () => alert("Pseudo déjà pris ou erreur !"));
-        }
+        function init(isHost) {
+            const name = isHost ? document.getElementById('my-name').value : null;
+            peer = isHost ? new Peer(name) : new Peer();
+            
+            peer.on('open', (id) => {
+                if(!isHost) {
+                    const friend = document.getElementById('friend-name').value;
+                    conn = peer.connect(friend);
+                    setupConn();
+                } else {
+                    alert("ID créé : " + id + ". Attends ton ami !");
+                }
+            });
 
-        function creerPartie() { initPeer(document.getElementById('my-name').value); alert("Attends ton ami..."); }
-        function rejoindrePartie() { 
-            initPeer(); // Pas d'ID pour celui qui rejoint
-            conn = peer.connect(document.getElementById('friend-name').value);
-            setupConn();
+            peer.on('connection', c => {
+                conn = c;
+                setupConn();
+            });
         }
 
         function setupConn() {
-            document.getElementById('setup').style.display = 'none';
-            document.getElementById('game').style.display = 'block';
+            conn.on('open', () => {
+                document.getElementById('setup').style.display = 'none';
+                document.getElementById('game').style.display = 'block';
+            });
+
             conn.on('data', d => {
-                if(d.chat) { document.getElementById('msgs').innerHTML += "<div>Lui: "+d.chat+"</div>"; }
-                else { motAmi = d.val; pretLui = true; document.getElementById('status-him').innerText = "PRÊT"; check(); }
+                console.log("Reçu :", d);
+                motAmi = d;
+                pretLui = true;
+                document.getElementById('s-him').innerText = "PRÊT";
+                check();
             });
         }
 
         function valider() {
-            monMot = document.getElementById('word').value;
-            conn.send({val: monMot});
-            pretMoi = true; document.getElementById('status-me').innerText = "PRÊT";
-            document.getElementById('word').value = ""; check();
+            monMot = document.getElementById('word').value.trim();
+            if(!monMot) return;
+            
+            conn.send(monMot); // On envoie le texte brut
+            pretMoi = true;
+            document.getElementById('s-me').innerText = "PRÊT";
+            document.getElementById('send-btn').disabled = true;
+            check();
         }
 
         function check() {
             if(pretMoi && pretLui) {
-                document.getElementById('status-me').innerText = monMot;
-                document.getElementById('status-him').innerText = motAmi;
-                if(monMot.toLowerCase() === motAmi.toLowerCase()) document.getElementById('win').style.display = 'block';
-                setTimeout(() => { location.reload(); }, 4000);
+                document.getElementById('s-me').innerText = monMot;
+                document.getElementById('s-him').innerText = motAmi;
+                if(monMot.toLowerCase() === motAmi.toLowerCase()) {
+                    document.getElementById('win').style.display = 'block';
+                }
+                setTimeout(() => {
+                    pretMoi = false; pretLui = false;
+                    document.getElementById('win').style.display = 'none';
+                    document.getElementById('s-me').innerText = "...";
+                    document.getElementById('s-him').innerText = "...";
+                    document.getElementById('send-btn').disabled = false;
+                    document.getElementById('word').value = "";
+                }, 4000);
             }
-        }
-
-        function sendChat(txt) {
-            conn.send({chat: txt});
-            document.getElementById('msgs').innerHTML += "<div>Moi: "+txt+"</div>";
         }
     </script>
 </body>
