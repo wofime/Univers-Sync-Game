@@ -3,156 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sync Game + Chat</title>
+    <title>Sync Game Simple</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
-        .container { width: 90%; max-width: 500px; text-align: center; z-index: 1; }
-        .box { background: #1e293b; border-radius: 15px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        
-        /* Zone de Révélation */
-        #reveal-zone { display: flex; justify-content: space-around; margin: 20px 0; min-height: 100px; }
-        .card { background: #020617; padding: 15px; border-radius: 10px; width: 42%; border: 2px solid #334155; transition: 0.3s; }
-        .card.ready { border-color: #4ade80; }
-        .word-text { font-size: 1.1rem; font-weight: bold; margin-top: 10px; color: #94a3b8; }
-
-        input { width: 80%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 10px; }
-        .btn-main { width: 85%; padding: 12px; border-radius: 8px; border: none; background: #f472b6; color: white; font-weight: bold; cursor: pointer; }
-        .btn-main:disabled { background: #475569; }
-
-        /* Le Chat Coulissant */
-        #chat-panel { position: fixed; right: -300px; top: 0; width: 300px; height: 100%; background: #1e293b; border-left: 2px solid #334155; transition: 0.3s; display: flex; flex-direction: column; z-index: 10; }
-        #chat-panel.open { right: 0; }
-        #chat-content { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .chat-msg { padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; max-width: 80%; }
-        .chat-me { align-self: flex-end; background: #3b82f6; }
-        .chat-friend { align-self: flex-start; background: #334155; }
-        
-        #chat-toggle { position: fixed; right: 20px; bottom: 20px; padding: 15px; border-radius: 50%; background: #3b82f6; border: none; color: white; cursor: pointer; z-index: 11; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-
-        #victory-msg { display: none; color: #4ade80; font-size: 1.8rem; font-weight: bold; margin-bottom: 10px; animation: bounce 0.5s infinite alternate; }
-        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
+        body { font-family: sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
+        .box { background: #1e293b; padding: 20px; border-radius: 10px; margin: 10px auto; max-width: 400px; }
+        input { padding: 10px; border-radius: 5px; border: none; width: 70%; margin: 5px; }
+        button { padding: 10px; cursor: pointer; background: #f472b6; border: none; color: white; border-radius: 5px; }
+        #chat-zone { position: fixed; right: 0; top: 0; width: 200px; height: 100%; background: #020617; display: none; padding: 10px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>🚀 Sync Game</h1>
-
-        <div id="setup-box" class="box">
-            <p>Ton ID : <strong id="my-id" style="color: #f472b6;">...</strong></p>
-            <input type="text" id="join-id" placeholder="ID de l'ami...">
-            <button class="btn-main" onclick="connecter()">JOUER</button>
-        </div>
-
-        <div id="game-box" class="box" style="display: none;">
-            <div id="victory-msg">✨ SYNCHRO ! ✨</div>
-            <div id="reveal-zone">
-                <div id="card-me" class="card">Moi<div class="word-text" id="my-status">...</div></div>
-                <div id="card-friend" class="card">Ami<div class="word-text" id="friend-status">...</div></div>
-            </div>
-            <input type="text" id="word-input" placeholder="Ton mot secret...">
-            <button id="send-btn" class="btn-main" onclick="preparerMot()">RÉVÉLER</button>
-        </div>
+    <div id="setup" class="box">
+        <h3>1. Ton pseudo</h3>
+        <input type="text" id="my-name" placeholder="Ex: lucas">
+        <button onclick="creerPartie()">Créer</button>
+        <hr>
+        <h3>2. Rejoindre un ami</h3>
+        <input type="text" id="friend-name" placeholder="Pseudo de l'ami">
+        <button onclick="rejoindrePartie()">Rejoindre</button>
     </div>
 
-    <button id="chat-toggle" onclick="toggleChat()">💬</button>
-    <div id="chat-panel">
-        <h3 style="padding: 10px; margin: 0; background: #0f172a;">Discussion</h3>
-        <div id="chat-content"></div>
-        <div style="padding: 10px;">
-            <input type="text" id="chat-input" placeholder="Message..." style="width: 70%; font-size: 0.8rem;">
-            <button onclick="envoyerChat()" style="width: 20%; padding: 8px;">OK</button>
+    <div id="game" class="box" style="display:none;">
+        <h2 id="win" style="color:lime; display:none;">✨ SYNCHRO !</h2>
+        <div style="display:flex; justify-content:space-around;">
+            <div>Moi<div id="status-me">...</div></div>
+            <div>Lui<div id="status-him">...</div></div>
         </div>
+        <br>
+        <input type="text" id="word" placeholder="Mot secret...">
+        <button onclick="valider()">OK</button>
+    </div>
+
+    <button onclick="document.getElementById('chat-zone').style.display='block'" style="position:fixed; bottom:10px; right:10px;">Chat</button>
+    <div id="chat-zone">
+        <div id="msgs" style="height:80%; overflow-y:auto;"></div>
+        <input type="text" id="msg-in" style="width:80%" onchange="sendChat(this.value); this.value=''">
     </div>
 
     <script>
-        const peer = new Peer();
-        let conn;
-        let monMot = "", motAmi = "";
-        let prêtMoi = false, prêtAmi = false;
+        let peer, conn, monMot, motAmi, pretMoi, pretLui;
 
-        peer.on('open', (id) => { document.getElementById('my-id').innerText = id; });
-
-        peer.on('connection', (connection) => {
-            conn = connection;
-            configurerLien();
-            lancerInterface();
-        });
-
-        function connecter() {
-            conn = peer.connect(document.getElementById('join-id').value.trim());
-            configurerLien();
-            conn.on('open', lancerInterface);
+        function initPeer(id) {
+            peer = new Peer(id); // On force l'ID avec ton pseudo
+            peer.on('connection', c => { conn = c; setupConn(); });
+            peer.on('error', () => alert("Pseudo déjà pris ou erreur !"));
         }
 
-        function lancerInterface() {
-            document.getElementById('setup-box').style.display = "none";
-            document.getElementById('game-box').style.display = "block";
+        function creerPartie() { initPeer(document.getElementById('my-name').value); alert("Attends ton ami..."); }
+        function rejoindrePartie() { 
+            initPeer(); // Pas d'ID pour celui qui rejoint
+            conn = peer.connect(document.getElementById('friend-name').value);
+            setupConn();
         }
 
-        function configurerLien() {
-            conn.on('data', (data) => {
-                if (data.type === 'chat') {
-                    ajouterAuChat(data.val, 'friend');
-                } else if (data.type === 'game') {
-                    motAmi = data.val;
-                    prêtAmi = true;
-                    document.getElementById('card-friend').classList.add('ready');
-                    document.getElementById('friend-status').innerText = "PRÊT";
-                    verifierEtReveler();
-                }
+        function setupConn() {
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            conn.on('data', d => {
+                if(d.chat) { document.getElementById('msgs').innerHTML += "<div>Lui: "+d.chat+"</div>"; }
+                else { motAmi = d.val; pretLui = true; document.getElementById('status-him').innerText = "PRÊT"; check(); }
             });
         }
 
-        function preparerMot() {
-            monMot = document.getElementById('word-input').value.trim();
-            if (!monMot) return;
-            prêtMoi = true;
-            conn.send({type: 'game', val: monMot});
-            document.getElementById('send-btn').disabled = true;
-            document.getElementById('card-me').classList.add('ready');
-            document.getElementById('my-status').innerText = "PRÊT";
-            document.getElementById('word-input').value = "";
-            verifierEtReveler();
+        function valider() {
+            monMot = document.getElementById('word').value;
+            conn.send({val: monMot});
+            pretMoi = true; document.getElementById('status-me').innerText = "PRÊT";
+            document.getElementById('word').value = ""; check();
         }
 
-        function verifierEtReveler() {
-            if (prêtMoi && prêtAmi) {
-                document.getElementById('my-status').innerText = monMot;
-                document.getElementById('friend-status').innerText = motAmi;
-                if (monMot.toLowerCase() === motAmi.toLowerCase()) {
-                    document.getElementById('victory-msg').style.display = "block";
-                }
-                setTimeout(() => {
-                    prêtMoi = false; prêtAmi = false;
-                    document.getElementById('send-btn').disabled = false;
-                    document.getElementById('my-status').innerText = "...";
-                    document.getElementById('friend-status').innerText = "...";
-                    document.getElementById('card-me').classList.remove('ready');
-                    document.getElementById('card-friend').classList.remove('ready');
-                    document.getElementById('victory-msg').style.display = "none";
-                }, 4000);
+        function check() {
+            if(pretMoi && pretLui) {
+                document.getElementById('status-me').innerText = monMot;
+                document.getElementById('status-him').innerText = motAmi;
+                if(monMot.toLowerCase() === motAmi.toLowerCase()) document.getElementById('win').style.display = 'block';
+                setTimeout(() => { location.reload(); }, 4000);
             }
         }
 
-        // Fonctions du Chat
-        function toggleChat() { document.getElementById('chat-panel').classList.toggle('open'); }
-        
-        function envoyerChat() {
-            const input = document.getElementById('chat-input');
-            if (!input.value.trim() || !conn) return;
-            conn.send({type: 'chat', val: input.value});
-            ajouterAuChat(input.value, 'me');
-            input.value = "";
-        }
-
-        function ajouterAuChat(txt, auteur) {
-            const div = document.createElement('div');
-            div.className = 'chat-msg ' + (auteur === 'me' ? 'chat-me' : 'chat-friend');
-            div.innerText = txt;
-            document.getElementById('chat-content').appendChild(div);
-            document.getElementById('chat-content').scrollTop = document.getElementById('chat-content').scrollHeight;
+        function sendChat(txt) {
+            conn.send({chat: txt});
+            document.getElementById('msgs').innerHTML += "<div>Moi: "+txt+"</div>";
         }
     </script>
 </body>
