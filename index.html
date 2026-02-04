@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MindSync - Jeu de Synchro</title>
-    <!-- Bibliothèque PeerJS pour la connexion (Obligatoire pour le multijoueur P2P sans serveur) -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     
     <style>
-        /* --- CSS (Design) --- */
+        /* --- CSS (Design & Animations) --- */
         :root {
             --bg-color: #0f172a;
             --surface-color: #1e293b;
@@ -76,20 +75,23 @@
             text-align: center;
             margin-bottom: 20px;
             border: 1px solid var(--surface-light);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        input[type="text"] {
+        input[type="text"], input[type="number"] {
             width: 100%;
             padding: 12px;
             border-radius: 8px;
             border: 1px solid var(--surface-light);
             background: #020617;
             color: white;
-            font-size: 1rem;
+            font-size: 1.1rem;
             margin-bottom: 10px;
             outline: none;
+            letter-spacing: 1px;
         }
-        input[type="text"]:focus { border-color: var(--primary); }
+        input[type="text"]:focus, input[type="number"]:focus { border-color: var(--primary); }
+        input[readonly] { background: var(--surface-light); color: var(--secondary); font-weight: bold; letter-spacing: 3px; }
 
         button {
             width: 100%;
@@ -100,11 +102,11 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:disabled { background: var(--surface-light); opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
+        .btn-primary:disabled { background: var(--surface-light); opacity: 0.5; cursor: not-allowed; box-shadow: none; }
         .btn-secondary { background: var(--surface-light); color: white; margin-top: 10px; }
 
-        /* Zone de Jeu (Cartes) */
+        /* Zone de Jeu (Cartes 3D) */
         .game-board {
             display: flex;
             justify-content: space-between;
@@ -142,15 +144,17 @@
         }
 
         .card-front { background: var(--surface-color); }
-        .card-back { background: var(--primary); color: white; transform: rotateY(180deg); }
+        .card-back { background: var(--primary); color: white; transform: rotateY(180deg); border-color: var(--primary); }
 
-        .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+        .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
         .word { font-size: 1.2rem; font-weight: bold; margin-top: 5px; word-break: break-word; }
         
         .ready-indicator {
             width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px;
+            transition: 0.3s;
         }
         .game-card.ready .ready-indicator { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .game-card.ready .card-front { border-color: var(--success); }
 
         /* Chat */
         #fab-chat {
@@ -166,6 +170,7 @@
             font-size: 1.2rem;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 20;
         }
 
         #chat-panel {
@@ -192,9 +197,10 @@
             gap: 8px;
         }
 
-        .msg { padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; max-width: 80%; }
+        .msg { padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; max-width: 80%; animation: popIn 0.2s; }
         .msg-me { align-self: flex-end; background: var(--primary); color: white; }
         .msg-friend { align-self: flex-start; background: var(--surface-light); color: white; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         .chat-header { padding: 15px; background: #0f172a; display: flex; justify-content: space-between; }
         .close-btn { background: none; border: none; color: white; font-size: 1.5rem; width: auto; }
@@ -211,12 +217,14 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s;
+            z-index: 100;
         }
         #toast.show { opacity: 1; }
 
         #victory-text { text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; display: none; }
-        .win { color: var(--success); }
+        .win { color: var(--success); animation: pulse 0.5s infinite alternate; }
         .lose { color: var(--text-muted); }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
     </style>
 </head>
 <body>
@@ -233,13 +241,13 @@
         <div id="view-lobby" class="view active">
             <div class="card">
                 <h3>Bienvenue</h3>
-                <p>Ton ID :</p>
-                <input type="text" id="my-id" readonly value="Génération..." onclick="this.select()">
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Ton code à 5 chiffres :</p>
+                <input type="text" id="my-id" readonly value="..." onclick="this.select()">
                 
-                <hr style="border: 0; border-top: 1px solid #334155; margin: 15px 0;">
+                <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
                 
-                <p> ID de l'ami :</p>
-                <input type="text" id="friend-id" placeholder="Colle l'ID ici...">
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Code de l'ami :</p>
+                <input type="number" id="friend-id" placeholder="Ex: 12345">
                 <button class="btn-primary" onclick="connect()">JOUER</button>
             </div>
         </div>
@@ -306,7 +314,7 @@
     <script>
         // --- JAVASCRIPT (Logique) ---
         
-        const peer = new Peer();
+        let peer;
         let conn = null;
         let myWord = "";
         let friendWord = "";
@@ -331,28 +339,50 @@
             chatInput: document.getElementById('chat-input')
         };
 
-        // Initialisation PeerJS
-        peer.on('open', (id) => {
-            els.myId.value = id;
-        });
+        // --- LOGIQUE ID COURT (5 CHIFFRES) ---
+        function initShortPeer() {
+            // Générer nombre entre 10000 et 99999
+            const shortId = Math.floor(10000 + Math.random() * 90000).toString();
+            
+            // Essayer de créer la connexion Peer avec cet ID
+            peer = new Peer(shortId);
 
-        // Si quelqu'un se connecte à moi
-        peer.on('connection', (c) => {
-            conn = c;
-            setupConn();
-            goToGame();
-        });
+            peer.on('open', (id) => {
+                els.myId.value = id;
+            });
 
-        // Si je me connecte à quelqu'un
+            // Si l'ID est déjà pris (erreur PeerJS), on réessaie
+            peer.on('error', (err) => {
+                if (err.type === 'unavailable-id') {
+                    initShortPeer(); // On boucle jusqu'à trouver un ID libre
+                } else {
+                    console.error(err);
+                }
+            });
+            
+            // Écouteur si quelqu'un se connecte à nous
+            peer.on('connection', (c) => {
+                conn = c;
+                setupConn();
+                goToGame();
+            });
+        }
+
+        // Démarrer la recherche d'ID
+        initShortPeer();
+
+        // --- LOGIQUE JEU ---
+
         function connect() {
             const id = els.friendId.value.trim();
-            if(!id) return alert("Entre un ID");
+            if(!id) return alert("Entre un code");
             
             conn = peer.connect(id);
             conn.on('open', () => {
                 setupConn();
                 goToGame();
             });
+            conn.on('error', () => alert("Connexion impossible. Code invalide ?"));
         }
 
         function setupConn() {
