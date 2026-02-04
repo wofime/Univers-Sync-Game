@@ -3,520 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Synchrone - Le Duel de Mots</title>
-    <!-- Import de PeerJS pour la connexion P2P -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <title>Synchrone - Debug</title>
+    <!-- CHANGEMENT CDN : Utilisation de Cloudflare (plus stable) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
     <style>
         :root {
             --primary: #6366f1;
-            --primary-dark: #4f46e5;
             --bg: #f8fafc;
-            --card-bg: #ffffff;
             --text: #1e293b;
-            --text-light: #64748b;
-            --success: #22c55e;
             --error: #ef4444;
-            --border-radius: 12px;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --success: #22c55e;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; }
         
-        body { background-color: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-
-        /* --- UTILS --- */
+        .container { max-width: 500px; margin: 0 auto; width: 100%; flex: 1; display: flex; flex-direction: column; }
         .hidden { display: none !important; }
-        .btn {
-            background-color: var(--primary); color: white; border: none; padding: 12px 20px;
-            border-radius: var(--border-radius); font-size: 1rem; cursor: pointer; transition: 0.2s;
-            font-weight: 600; width: 100%;
-        }
-        .btn:disabled { background-color: var(--text-light); cursor: not-allowed; opacity: 0.7; }
+        
+        /* UI ELEMENTS */
+        .btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
         .btn:active { transform: scale(0.98); }
-        .btn-secondary { background-color: white; color: var(--text); border: 2px solid var(--text-light); }
+        .btn:disabled { background: #ccc; }
         
-        input[type="text"] {
-            width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: var(--border-radius);
-            font-size: 1.1rem; outline: none; transition: 0.2s;
-        }
-        input[type="text"]:focus { border-color: var(--primary); }
+        input { padding: 15px; border: 2px solid #ccc; border-radius: 8px; width: 100%; font-size: 1.2rem; text-align: center; margin-bottom: 10px; box-sizing: border-box; }
+        input:focus { border-color: var(--primary); outline: none; }
 
-        /* --- LAYOUTS --- */
-        #app-container { width: 100%; max-width: 500px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; padding: 1rem; position: relative; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; margin-bottom: 20px; }
+        .big-text { font-size: 2rem; font-weight: bold; margin: 10px 0; color: var(--primary); }
 
-        /* ECRAN DE CONNEXION */
-        #lobby-screen {
-            display: flex; flex-direction: column; justify-content: center; height: 100%; gap: 1rem;
-            text-align: center;
+        /* LOGS CONSOLE VISUELLE */
+        #debug-log {
+            background: #1e1e1e; color: #00ff00; font-family: monospace; font-size: 12px;
+            padding: 10px; border-radius: 8px; height: 150px; overflow-y: auto; margin-top: auto;
+            border: 2px solid #444; white-space: pre-wrap;
         }
-        .card { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--shadow); }
-        .lobby-actions { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
-        
-        /* ECRAN DE JEU */
-        #game-screen {
-            display: flex; flex-direction: column; flex: 1; gap: 1rem; height: 100%;
-        }
+        .log-error { color: #ff4444; font-weight: bold; }
+        .log-info { color: #aaaaaa; }
+        .log-success { color: #00ff00; }
 
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-        .connection-badge {
-            font-size: 0.8rem; padding: 4px 8px; border-radius: 20px; background: #e2e8f0; color: var(--text-light);
-        }
-        .connection-badge.connected { background: #dcfce7; color: #166534; }
+        /* ZONE JEU */
+        .game-row { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
+        .player-card { background: white; padding: 15px; border-radius: 8px; flex: 1; text-align: center; border: 2px solid transparent; }
+        .player-card.active { border-color: var(--primary); }
+        .player-card.ready { border-color: var(--success); background: #f0fdf4; }
+        .player-card.win { border-color: gold; background: #fffbeb; animation: pulse 1s infinite; }
 
-        /* ZONE DE JEU PRINCIPALE */
-        #game-area { flex: 1; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
-        
-        .status-box {
-            background: var(--card-bg); padding: 1rem; border-radius: var(--border-radius);
-            box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center;
-            text-align: center; position: relative; overflow: hidden;
-            border: 2px solid transparent; transition: 0.3s;
-        }
-        
-        .status-box.my-turn { border-color: var(--primary); }
-        .status-box.opponent-turn { border-color: var(--text-light); }
-        .status-box.ready { border-color: var(--success); background-color: #f0fdf4; }
-        .status-box.win { border-color: #fbbf24; background-color: #fef3c7; animation: pulse 1s infinite; }
-
-        .player-label { font-size: 0.9rem; font-weight: bold; color: var(--text-light); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
-        .word-display { font-size: 1.5rem; font-weight: 800; min-height: 2rem; color: var(--text); margin: 0.5rem 0; }
-        
-        .status-indicator {
-            font-size: 1.2rem; font-weight: bold; color: var(--primary);
-        }
-        .status-indicator.waiting { color: var(--text-light); font-size: 1rem; font-style: italic; }
-        .status-indicator.synced { color: var(--success); font-size: 1.5rem; }
-        .status-indicator.fail { color: var(--error); }
-
-        /* CONTROLES */
-        #controls { display: flex; gap: 0.5rem; align-items: center; }
-        
-        /* CHAT */
-        #chat-container {
-            height: 150px; background: var(--card-bg); border-radius: var(--border-radius);
-            box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden;
-        }
-        #chat-messages {
-            flex: 1; overflow-y: auto; padding: 0.8rem; font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem;
-            background: #f1f5f9;
-        }
-        .msg { padding: 4px 8px; border-radius: 8px; max-width: 80%; word-wrap: break-word; }
-        .msg.self { background: var(--primary); color: white; align-self: flex-end; }
-        .msg.other { background: white; color: var(--text); align-self: flex-start; border: 1px solid #e2e8f0; }
-        
-        #chat-form { display: flex; border-top: 1px solid #e2e8f0; }
-        #chat-input { border: none; padding: 10px; border-radius: 0; }
-        #chat-send { background: var(--primary); border: none; color: white; padding: 0 15px; font-weight: bold; border-radius: 0; }
-
-        /* ANIMATIONS */
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
-        }
-
-        /* Toast notifications */
-        #toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 20px;
-            font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
-        }
-        #toast.visible { opacity: 1; }
-
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); } }
     </style>
 </head>
 <body>
 
-<div id="toast"></div>
-
-<div id="app-container">
+<div class="container">
     
-    <!-- ECRAN DE CONNEXION -->
-    <section id="lobby-screen">
-        <div class="card">
-            <h1>Synchrone 🧠</h1>
-            <p style="color: var(--text-light); margin-top: 0.5rem;">Essayez de trouver le même mot !</p>
-            
-            <div class="lobby-actions">
-                <button class="btn" onclick="createRoom()">Créer une salle</button>
-                
-                <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
-                    <hr style="flex: 1; border: 0; border-top: 1px solid #ccc;">
-                    <span style="font-size: 0.8rem; color: #888;">OU</span>
-                    <hr style="flex: 1; border: 0; border-top: 1px solid #ccc;">
-                </div>
+    <!-- ECRAN LOBBY -->
+    <div id="lobby-screen" class="card">
+        <h1>Synchrone 🧠</h1>
+        <p>Version Diagnostic</p>
+        
+        <button class="btn" onclick="initGame()">Créer une salle</button>
+        
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+        
+        <input type="text" id="join-input" placeholder="Code (ex: 84219)">
+        <button class="btn" style="background: white; color: black; border: 1px solid #ccc;" onclick="joinGame()">Rejoindre</button>
 
-                <input type="text" id="join-id-input" placeholder="Collez l'ID de l'ami ici...">
-                <button class="btn btn-secondary" onclick="joinRoom()">Rejoindre</button>
-            </div>
-            
-            <div id="room-id-display" class="hidden" style="margin-top: 1.5rem;">
-                <p>Votre ID de salle :</p>
-                <div style="display: flex; gap: 5px; margin-top: 5px;">
-                    <input type="text" id="my-peer-id" readonly style="background: #f1f5f9; text-align: center; font-family: monospace;">
-                    <button class="btn" style="width: auto; padding: 0 15px;" onclick="copyId()">Copier</button>
-                </div>
-                <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 5px;">En attente d'un joueur...</p>
-            </div>
+        <div id="my-code-display" class="hidden" style="margin-top: 20px;">
+            <p>Votre code :</p>
+            <div class="big-text" id="code-text">---</div>
+            <button class="btn" onclick="copyCode()">Copier le code</button>
         </div>
-    </section>
+    </div>
 
-    <!-- ECRAN DE JEU -->
-    <section id="game-screen" class="hidden">
-        <header>
-            <h2>Synchrone</h2>
-            <span id="connection-status" class="connection-badge">Hors ligne</span>
-        </header>
-
-        <div id="game-area">
-            <!-- Statut de l'adversaire -->
-            <div class="status-box opponent-turn" id="box-opponent">
-                <div class="player-label">Adversaire</div>
-                <div class="word-display" id="word-opponent">...</div>
-                <div class="status-indicator" id="status-opponent">En attente</div>
-            </div>
-
-            <!-- Zone de jeu principale -->
-            <div class="status-box my-turn" id="box-me">
-                <div class="player-label">Moi</div>
-                <div class="word-display" id="word-me">?</div>
-                
-                <div id="input-area" style="width: 100%; margin-top: 10px;">
-                    <input type="text" id="my-input" placeholder="Votre mot secret..." autocomplete="off">
-                    <div id="controls" style="margin-top: 10px;">
-                        <button class="btn" id="btn-validate" onclick="submitWord()">Valider</button>
-                        <button class="btn btn-secondary hidden" id="btn-reset" onclick="resetGame()">Rejouer</button>
-                    </div>
-                </div>
-                <div id="my-status-msg" class="status-indicator waiting hidden">En attente de l'autre...</div>
+    <!-- ECRAN JEU -->
+    <div id="game-screen" class="hidden">
+        <div class="game-row">
+            <div class="player-card" id="card-opp">
+                <div>Adversaire</div>
+                <div id="word-opp" class="big-text">...</div>
+                <div id="status-opp" style="font-size: 0.9rem; color: #666;">En attente</div>
             </div>
         </div>
 
-        <!-- Chat -->
-        <div id="chat-container">
-            <div id="chat-messages">
-                <div style="text-align:center; color:#888; font-size: 0.8rem; margin-top: 5px;">Chat d'équipe</div>
+        <div class="game-row">
+            <div class="player-card active" id="card-me">
+                <div>Moi</div>
+                <div id="word-me" class="big-text">?</div>
+                <input type="text" id="my-word" placeholder="Votre mot..." autocomplete="off" style="margin-top: 10px;">
+                <button class="btn" id="btn-submit" onclick="submitWord()">Valider</button>
+                <button class="btn hidden" id="btn-restart" onclick="restartGame()">Rejouer</button>
             </div>
-            <form id="chat-form" onsubmit="sendChat(event)">
-                <input type="text" id="chat-input" placeholder="Indice (ex: C'est un fruit)...">
-                <button type="submit" id="chat-send">➤</button>
-            </form>
         </div>
-    </section>
+        
+        <!-- Chat simplifié -->
+        <div style="margin-top: 10px; display:flex; gap:5px;">
+            <input type="text" id="chat-input" placeholder="Chat..." style="padding: 10px; font-size: 0.9rem;">
+            <button class="btn" style="width: auto; padding: 0 15px;" onclick="sendChat()">Envoyer</button>
+        </div>
+        <div id="chat-box" style="height: 60px; overflow-y: auto; background: #f1f5f9; border-radius: 8px; padding: 5px; font-size: 0.8rem; margin-bottom: 10px;"></div>
+    </div>
 
+    <!-- CONSOLE DE DEBUG -->
+    <div id="debug-log">Journal système en attente...</div>
 </div>
 
 <script>
-    // --- CONFIGURATION ET VARIABLES GLOBALES ---
+    // --- LOGS ---
+    function log(msg, type = 'normal') {
+        const box = document.getElementById('debug-log');
+        const time = new Date().toLocaleTimeString();
+        let colorClass = '';
+        if(type === 'error') colorClass = 'log-error';
+        else if(type === 'success') colorClass = 'log-success';
+        else if(type === 'info') colorClass = 'log-info';
+        
+        box.innerHTML += `<div class="${colorClass}">[${time}] ${msg}</div>`;
+        box.scrollTop = box.scrollHeight;
+        console.log(msg);
+    }
+
+    // --- VERIFICATION INITIALISATION ---
+    window.onload = function() {
+        if (typeof Peer === 'undefined') {
+            log("ERREUR CRITIQUE : La librairie PeerJS n'a pas pu être chargée.", "error");
+            log("Cause probable : Adblock ou pare-feu entreprise bloquant 'cdnjs.cloudflare.com'.", "error");
+            alert("Erreur : Le script du jeu est bloqué par votre navigateur/réseau.");
+        } else {
+            log("Librairie chargée avec succès.", "success");
+        }
+    };
+
     let peer = null;
     let conn = null;
-    let myId = null;
+    let myCode = null;
     
-    // État du jeu
-    const state = {
-        myWord: "",
-        opponentWord: "",
-        amReady: false,
-        opponentReady: false,
-        isHost: false
-    };
-
-    // --- DOM ELEMENTS ---
-    const screens = {
-        lobby: document.getElementById('lobby-screen'),
-        game: document.getElementById('game-screen')
-    };
+    const state = { myWord: "", oppWord: "", amReady: false, oppReady: false };
     
-    const ui = {
-        roomIdDisplay: document.getElementById('room-id-display'),
-        myPeerIdInput: document.getElementById('my-peer-id'),
-        joinIdInput: document.getElementById('join-id-input'),
-        connStatus: document.getElementById('connection-status'),
+    // --- CREATION SALLE (ID COURT) ---
+    function initGame() {
+        document.getElementById('lobby-screen').querySelector('button').disabled = true;
+        document.getElementById('lobby-screen').querySelector('button').textContent = "Recherche d'un ID libre...";
         
-        boxOpponent: document.getElementById('box-opponent'),
-        wordOpponent: document.getElementById('word-opponent'),
-        statusOpponent: document.getElementById('status-opponent'),
-        
-        boxMe: document.getElementById('box-me'),
-        wordMe: document.getElementById('word-me'),
-        myInput: document.getElementById('my-input'),
-        myStatusMsg: document.getElementById('my-status-msg'),
-        btnValidate: document.getElementById('btn-validate'),
-        btnReset: document.getElementById('btn-reset'),
-        inputArea: document.getElementById('input-area'),
-        
-        chatMessages: document.getElementById('chat-messages'),
-        chatInput: document.getElementById('chat-input')
-    };
-
-    // --- INITIALISATION PEERJS ---
-    function initPeer(customId = null) {
-        // Création de l'objet Peer. Si c'est l'hôte, on génère un ID court pour faciliter le partage.
-        const options = {
-            debug: 1 // Logs pour debug
-        };
-        
-        // Utilisation du serveur public PeerJS par défaut
-        peer = new Peer(customId, options);
-
-        peer.on('open', (id) => {
-            myId = id;
-            console.log('Mon ID:', id);
-            
-            if (customId) {
-                // Si on a fourni un ID (Host), on l'affiche
-                ui.myPeerIdInput.value = id;
-                ui.roomIdDisplay.classList.remove('hidden');
-            }
-        });
-
-        peer.on('connection', (connection) => {
-            // Quelqu'un se connecte à nous (côté Hôte)
-            setupConnection(connection);
-        });
-
-        peer.on('error', (err) => {
-            showToast("Erreur de connexion : " + err.type);
-            console.error(err);
-        });
+        tryShortId(0);
     }
 
-    // --- GESTION DE LA CONNEXION ---
-    function setupConnection(connection) {
-        conn = connection;
-        
-        conn.on('open', () => {
-            updateConnectionStatus(true);
-            showToast("Connexion établie !");
-            switchScreen('game');
-        });
-
-        conn.on('data', (data) => {
-            handleIncomingData(data);
-        });
-
-        conn.on('close', () => {
-            updateConnectionStatus(false);
-            showToast("L'autre joueur s'est déconnecté.");
-            switchScreen('lobby');
-        });
-    }
-
-    function updateConnectionStatus(isConnected) {
-        if (isConnected) {
-            ui.connStatus.textContent = "Connecté";
-            ui.connStatus.classList.add('connected');
-        } else {
-            ui.connStatus.textContent = "Hors ligne";
-            ui.connStatus.classList.remove('connected');
-        }
-    }
-
-    function sendData(data) {
-        if (conn && conn.open) {
-            conn.send(data);
-        } else {
-            console.warn("Tentative d'envoi sans connexion");
-        }
-    }
-
-    // --- LOGIQUE DU JEU ---
-
-    // Créer une salle (Hôte)
-    function createRoom() {
-        initPeer(); // PeerJS génère un ID aléatoire
-        state.isHost = true;
-        ui.myPeerIdInput.value = "Génération...";
-        ui.roomIdDisplay.classList.remove('hidden');
-        // Masquer les boutons de lobby pour éviter la confusion
-        document.querySelector('.lobby-actions').style.display = 'none';
-    }
-
-    // Rejoindre une salle (Invité)
-    function joinRoom() {
-        const hostId = ui.joinIdInput.value.trim();
-        if (!hostId) {
-            showToast("Veuillez entrer un ID valide");
+    function tryShortId(attempt) {
+        if (attempt > 15) {
+            log("Trop de tentatives échouées. Serveur saturé ?", "error");
+            alert("Impossible de créer un code libre. Réessayez dans 2 minutes.");
+            location.reload();
             return;
         }
 
-        peer = new Peer(); // Pas besoin d'ID personnalisé pour le client
-        peer.on('open', () => {
-            const connection = peer.connect(hostId);
-            setupConnection(connection);
+        // Génération ID 5 chiffres
+        const shortId = Math.floor(10000 + Math.random() * 90000).toString();
+        log(`Tentative ID Court : ${shortId}...`, "info");
+
+        // Configuration PeerJS robuste
+        peer = new Peer(shortId, {
+            debug: 1,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
         });
+
+        peer.on('open', (id) => {
+            log(`ID Créé avec succès : ${id}`, "success");
+            myCode = id;
+            document.getElementById('code-text').textContent = myCode;
+            document.getElementById('my-code-display').classList.remove('hidden');
+            document.querySelector('.lobby-actions')?.remove(); // Nettoyage UI
+            
+            peer.on('connection', (c) => {
+                log("Un joueur arrive !", "success");
+                setupConnection(c);
+            });
+        });
+
         peer.on('error', (err) => {
-            showToast("Impossible de rejoindre cet ID");
+            if (err.type === 'unavailable-id') {
+                log(`ID ${shortId} déjà pris. Réessai...`, "info");
+                peer.destroy();
+                tryShortId(attempt + 1);
+            } else {
+                log(`Erreur PeerJS : ${err.type}`, "error");
+                log(`Détail : ${err.message}`, "error");
+            }
         });
     }
 
-    // Soumettre un mot
-    function submitWord() {
-        const word = ui.myInput.value.trim();
-        if (!word) return;
+    // --- REJOINDRE ---
+    function joinGame() {
+        const targetId = document.getElementById('join-input').value.trim();
+        if (!targetId) return alert("Entrez un code");
 
-        // Mise à jour locale
-        state.myWord = word;
+        log(`Tentative de connexion au code ${targetId}...`, "info");
+
+        peer = new Peer({
+            debug: 1,
+            config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+        });
+
+        peer.on('open', () => {
+            log("Connecté au serveur de signalisation.", "success");
+            const c = peer.connect(targetId);
+            setupConnection(c);
+        });
+
+        peer.on('error', (err) => {
+            log(`Erreur connexion : ${err.type}`, "error");
+            if(err.type === 'peer-unavailable') {
+                alert("Ce code n'existe pas ou n'est plus en ligne.");
+            } else {
+                alert("Erreur de connexion réseau.");
+            }
+        });
+    }
+
+    function setupConnection(c) {
+        conn = c;
+        
+        conn.on('open', () => {
+            log("CANAL P2P OUVERT. Jeu prêt.", "success");
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+        });
+
+        conn.on('data', (data) => handleData(data));
+        conn.on('close', () => {
+            log("Déconnecté par l'autre joueur.", "error");
+            location.reload();
+        });
+        conn.on('error', (err) => {
+            log(`Erreur DataChannel : ${err.type}`, "error");
+        });
+    }
+
+    // --- JEU ---
+    function handleData(data) {
+        if (data.type === 'COMMIT') {
+            state.oppWord = data.word;
+            state.oppReady = true;
+            document.getElementById('word-opp').textContent = "PRÊT";
+            document.getElementById('card-opp').classList.add('ready');
+            document.getElementById('status-opp').textContent = "Mot entré";
+            log("Adversaire a validé son mot.", "info");
+            checkResult();
+        }
+        else if (data.type === 'CHAT') {
+            const box = document.getElementById('chat-box');
+            box.innerHTML += `<div style="color:blue;">Lui: ${data.msg}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+        else if (data.type === 'RESET') {
+            restartGameUI();
+        }
+    }
+
+    function submitWord() {
+        const w = document.getElementById('my-word').value.trim();
+        if (!w) return;
+
+        state.myWord = w;
         state.amReady = true;
         
-        // Verrouiller l'interface locale
-        ui.myInput.disabled = true;
-        ui.myInput.classList.add('hidden');
-        ui.btnValidate.classList.add('hidden');
-        ui.myStatusMsg.textContent = "PRÊT";
-        ui.myStatusMsg.classList.remove('hidden');
-        ui.myStatusMsg.classList.add('waiting'); // Visuellement cela indique qu'on attend le résultat
-        
-        // Envoyer le mot "verrouillé" à l'autre
-        // NOTE: On envoie le mot tout de suite, mais l'affichage ne se fera que quand les deux seront prêts.
-        sendData({
-            type: 'COMMIT',
-            word: state.myWord
-        });
+        document.getElementById('my-word').disabled = true;
+        document.getElementById('my-word').classList.add('hidden');
+        document.getElementById('btn-submit').classList.add('hidden');
+        document.getElementById('word-me').textContent = "PRÊT";
+        document.getElementById('card-me').classList.add('ready');
 
-        checkSync();
+        conn.send({ type: 'COMMIT', word: w });
+        log("Mon mot envoyé.", "info");
+        checkResult();
     }
 
-    // Réception des données
-    function handleIncomingData(data) {
-        switch (data.type) {
-            case 'COMMIT':
-                state.opponentWord = data.word;
-                state.opponentReady = true;
-                
-                // UI: Indiquer que l'adversaire est prêt (sans montrer le mot)
-                ui.statusOpponent.textContent = "PRÊT";
-                ui.statusOpponent.style.color = "var(--success)";
-                ui.boxOpponent.classList.add('ready');
-                
-                checkSync();
-                break;
+    function checkResult() {
+        if (state.amReady && state.oppReady) {
+            log("Révélation des mots...", "info");
+            
+            document.getElementById('word-me').textContent = state.myWord;
+            document.getElementById('word-opp').textContent = state.oppWord;
+            
+            const isWin = state.myWord.toLowerCase() === state.oppWord.toLowerCase();
+            
+            if (isWin) {
+                log("VICTOIRE ! Mots identiques.", "success");
+                document.getElementById('card-me').classList.add('win');
+                document.getElementById('card-opp').classList.add('win');
+                document.getElementById('status-opp').textContent = "SYNCHRONISÉS !";
+            } else {
+                log("DÉFAITE. Mots différents.", "error");
+                document.getElementById('status-opp').textContent = "RATÉ";
+            }
 
-            case 'CHAT':
-                addChatMessage(data.msg, 'other');
-                break;
-                
-            case 'RESET':
-                resetGameUI();
-                showToast("L'autre joueur veut recommencer.");
-                break;
+            document.getElementById('btn-restart').classList.remove('hidden');
         }
     }
 
-    // Vérification si les deux sont prêts
-    function checkSync() {
-        if (state.amReady && state.opponentReady) {
-            revealWords();
-        }
+    function restartGame() {
+        conn.send({ type: 'RESET' });
+        restartGameUI();
     }
 
-    // Révélation et validation
-    function revealWords() {
-        // Afficher les mots
-        ui.wordMe.textContent = state.myWord;
-        ui.wordOpponent.textContent = state.opponentWord;
-
-        // Comparaison (insensible à la casse)
-        const match = state.myWord.toLowerCase() === state.opponentWord.toLowerCase();
-
-        // Résultat
-        ui.myStatusMsg.classList.add('hidden');
-        ui.inputArea.classList.add('hidden'); // Cacher l'input
+    function restartGameUI() {
+        state.myWord = ""; state.oppWord = ""; state.amReady = false; state.oppReady = false;
         
-        // Feedback visuel
-        ui.btnReset.classList.remove('hidden'); // Afficher bouton replay
-
-        if (match) {
-            ui.statusOpponent.textContent = "SYNCHRONISÉS !";
-            ui.statusOpponent.className = "status-indicator synced";
-            
-            ui.boxMe.classList.add('win');
-            ui.boxOpponent.classList.add('win');
-            
-            showToast("Victoire ! SYNCHRONISÉS !");
-        } else {
-            ui.statusOpponent.textContent = "RATÉ !";
-            ui.statusOpponent.className = "status-indicator fail";
-            
-            ui.boxMe.classList.add('fail'); // Optionnel: style css pour fail
-            showToast("Pas synchronisés...");
-        }
-    }
-
-    // Recommencer
-    function resetGame() {
-        // En reset local
-        resetGameUI();
+        document.getElementById('my-word').value = "";
+        document.getElementById('my-word').disabled = false;
+        document.getElementById('my-word').classList.remove('hidden');
+        document.getElementById('btn-submit').classList.remove('hidden');
+        document.getElementById('btn-restart').classList.add('hidden');
         
-        // Dire à l'autre de reset
-        sendData({ type: 'RESET' });
+        document.getElementById('word-me').textContent = "?";
+        document.getElementById('word-opp').textContent = "...";
+        document.getElementById('status-opp').textContent = "En attente";
+        
+        document.getElementById('card-me').classList.remove('ready', 'win');
+        document.getElementById('card-opp').classList.remove('ready', 'win');
+        
+        log("Jeu réinitialisé.", "info");
     }
 
-    function resetGameUI() {
-        // Reset variables
-        state.myWord = "";
-        state.opponentWord = "";
-        state.amReady = false;
-        state.opponentReady = false;
-
-        // Reset UI Moi
-        ui.myInput.value = "";
-        ui.myInput.disabled = false;
-        ui.myInput.classList.remove('hidden');
-        ui.btnValidate.classList.remove('hidden');
-        ui.btnReset.classList.add('hidden');
-        ui.wordMe.textContent = "?";
-        ui.myStatusMsg.classList.add('hidden');
-        ui.boxMe.classList.remove('win', 'fail');
-
-        // Reset UI Adversaire
-        ui.wordOpponent.textContent = "...";
-        ui.statusOpponent.textContent = "En attente";
-        ui.statusOpponent.className = "status-indicator";
-        ui.boxOpponent.classList.remove('ready', 'win', 'fail');
+    function sendChat() {
+        const msg = document.getElementById('chat-input').value.trim();
+        if (!msg || !conn) return;
+        
+        conn.send({ type: 'CHAT', msg: msg });
+        const box = document.getElementById('chat-box');
+        box.innerHTML += `<div style="text-align:right;">Moi: ${msg}</div>`;
+        document.getElementById('chat-input').value = "";
+        box.scrollTop = box.scrollHeight;
     }
 
-    // --- CHAT ---
-    function sendChat(e) {
-        e.preventDefault();
-        const msg = ui.chatInput.value.trim();
-        if (!msg) return;
-
-        sendData({ type: 'CHAT', msg: msg });
-        addChatMessage(msg, 'self');
-        ui.chatInput.value = '';
+    function copyCode() {
+        navigator.clipboard.writeText(myCode).then(() => alert("Code copié !"));
     }
-
-    function addChatMessage(msg, type) {
-        const div = document.createElement('div');
-        div.className = `msg ${type}`;
-        div.textContent = msg;
-        ui.chatMessages.appendChild(div);
-        ui.chatMessages.scrollTop = ui.chatMessages.scrollHeight;
-    }
-
-    // --- UTILITAIRES ---
-    function switchScreen(screenName) {
-        screens.lobby.classList.add('hidden');
-        screens.game.classList.add('hidden');
-        screens[screenName].classList.remove('hidden');
-    }
-
-    function copyId() {
-        ui.myPeerIdInput.select();
-        document.execCommand('copy'); // Fallback simple
-        showToast("ID copié !");
-    }
-
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.classList.add('visible');
-        setTimeout(() => {
-            toast.classList.remove('visible');
-        }, 3000);
-    }
-
 </script>
+
 </body>
 </html>
