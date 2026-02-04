@@ -3,23 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Synchrone - Debug</title>
-    <!-- CHANGEMENT CDN : Utilisation de Cloudflare (plus stable) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
-    <style>
-        :root {
-            --primary: #6366f1;<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MindSync - Le Jeu de Télépathie</title>
-    <!-- Utilisation de PeerJS pour le P2P -->
+    <title>MindSync - Jeu de Synchro</title>
+    <!-- Bibliothèque PeerJS pour la connexion (Obligatoire pour le multijoueur P2P sans serveur) -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <!-- Police d'écriture moderne -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* --- CSS (Design) --- */
         :root {
             --bg-color: #0f172a;
             --surface-color: #1e293b;
@@ -30,13 +19,12 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --radius: 16px;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
@@ -44,10 +32,9 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden; /* Empêche le scroll sur le body principal */
+            overflow: hidden;
         }
 
-        /* Layout Principal */
         #app-container {
             width: 100%;
             max-width: 480px;
@@ -60,100 +47,74 @@
 
         /* En-tête */
         header {
-            padding: 20px;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 5;
             border-bottom: 1px solid var(--surface-light);
         }
 
-        .logo { font-size: 1.5rem; font-weight: 700; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .score-board { background: var(--surface-color); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; border: 1px solid var(--surface-light); }
+        .logo { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .score { background: var(--surface-light); padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; }
 
-        /* Écrans (Views) */
+        /* Pages (Views) */
         .view {
             flex: 1;
-            display: none; /* Caché par défaut */
+            display: none;
             flex-direction: column;
             padding: 20px;
             overflow-y: auto;
-            animation: fadeIn 0.4s ease-out;
         }
-        
         .view.active { display: flex; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Composants UI */
+        /* Cartes et Inputs */
         .card {
             background: var(--surface-color);
             border-radius: var(--radius);
-            padding: 25px;
-            box-shadow: var(--shadow);
-            margin-bottom: 20px;
+            padding: 20px;
             text-align: center;
+            margin-bottom: 20px;
             border: 1px solid var(--surface-light);
         }
 
-        h2 { margin-top: 0; color: var(--text-main); font-size: 1.4rem; }
-        p { color: var(--text-muted); line-height: 1.5; }
-
-        .input-group { margin: 15px 0; text-align: left; }
-        label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
-        
         input[type="text"] {
             width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: 2px solid var(--surface-light);
-            background: var(--bg-color);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--surface-light);
+            background: #020617;
             color: white;
             font-size: 1rem;
-            font-family: inherit;
-            transition: 0.3s;
+            margin-bottom: 10px;
             outline: none;
         }
-        
         input[type="text"]:focus { border-color: var(--primary); }
 
-        .btn {
+        button {
             width: 100%;
-            padding: 14px;
-            border-radius: 12px;
+            padding: 12px;
+            border-radius: 8px;
             border: none;
-            font-weight: 700;
-            font-size: 1rem;
+            font-weight: bold;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
+            transition: 0.2s;
         }
-
-        .btn:active { transform: scale(0.98); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:disabled { background: var(--surface-light); opacity: 0.5; cursor: not-allowed; }
         .btn-secondary { background: var(--surface-light); color: white; margin-top: 10px; }
-        .btn-icon { width: auto; padding: 8px 12px; font-size: 0.8rem; }
 
-        /* Zone de Jeu (Cartes 3D) */
-        .game-area {
+        /* Zone de Jeu (Cartes) */
+        .game-board {
             display: flex;
-            justify-content: space-around;
-            align-items: center;
+            justify-content: space-between;
             margin: 20px 0;
-            gap: 15px;
         }
 
-        .player-card {
-            perspective: 1000px;
-            width: 45%;
+        .game-card {
+            width: 48%;
             aspect-ratio: 3/4;
+            perspective: 1000px;
         }
 
         .card-inner {
@@ -163,8 +124,6 @@
             text-align: center;
             transition: transform 0.6s;
             transform-style: preserve-3d;
-            box-shadow: var(--shadow);
-            border-radius: var(--radius);
         }
 
         .card-inner.flipped { transform: rotateY(180deg); }
@@ -173,56 +132,56 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            border-radius: var(--radius);
+            border-radius: 12px;
             border: 2px solid var(--surface-light);
         }
 
         .card-front { background: var(--surface-color); }
-        .card-back { background: var(--primary); color: white; transform: rotateY(180deg); border-color: var(--primary); }
+        .card-back { background: var(--primary); color: white; transform: rotateY(180deg); }
 
-        .card-label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 5px; }
-        .card-content { font-size: 1.2rem; font-weight: bold; color: white; word-wrap: break-word; padding: 5px; }
+        .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+        .word { font-size: 1.2rem; font-weight: bold; margin-top: 5px; word-break: break-word; }
         
-        /* État Ready sur la carte */
-        .player-card.ready .card-front { border-color: var(--success); }
-        .player-card.ready .status-dot { background: var(--success); box-shadow: 0 0 10px var(--success); }
+        .ready-indicator {
+            width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px;
+        }
+        .game-card.ready .ready-indicator { background: var(--success); box-shadow: 0 0 8px var(--success); }
 
-        .status-dot { width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px; transition: 0.3s; }
+        /* Chat */
+        #fab-chat {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
 
-        /* Chat Coulissant */
-        #chat-overlay {
+        #chat-panel {
             position: fixed;
             top: 0;
-            right: -100%;
-            width: 100%;
-            max-width: 350px;
+            right: -300px;
+            width: 300px;
             height: 100%;
             background: var(--surface-color);
-            z-index: 100;
-            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: 0.3s;
             display: flex;
             flex-direction: column;
-            box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+            border-left: 2px solid var(--surface-light);
+            z-index: 10;
         }
-
-        #chat-overlay.open { right: 0; }
-
-        .chat-header {
-            padding: 20px;
-            background: var(--bg-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--surface-light);
-        }
-
-        .close-chat { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        #chat-panel.open { right: 0; }
 
         #chat-messages {
             flex: 1;
@@ -230,799 +189,292 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .message {
-            max-width: 80%;
-            padding: 10px 15px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        .msg { padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; max-width: 80%; }
+        .msg-me { align-self: flex-end; background: var(--primary); color: white; }
+        .msg-friend { align-self: flex-start; background: var(--surface-light); color: white; }
 
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .chat-header { padding: 15px; background: #0f172a; display: flex; justify-content: space-between; }
+        .close-btn { background: none; border: none; color: white; font-size: 1.5rem; width: auto; }
 
-        .msg-me { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
-        .msg-friend { align-self: flex-start; background: var(--surface-light); color: white; border-bottom-left-radius: 2px; }
-        .sys-msg { align-self: center; background: transparent; color: var(--text-muted); font-size: 0.75rem; margin: 5px 0; font-style: italic; }
-
-        .chat-input-area {
-            padding: 15px;
-            background: var(--bg-color);
-            display: flex;
-            gap: 10px;
-        }
-
-        #fab-chat {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: var(--secondary);
-            color: white;
-            border: none;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            cursor: pointer;
-            z-index: 50;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: transform 0.2s;
-        }
-        
-        #fab-chat:hover { transform: scale(1.1); }
-        #badge-unread { display: none; position: absolute; top: 0; right: 0; width: 15px; height: 15px; background: red; border-radius: 50%; border: 2px solid var(--bg-color); }
-
-        /* Toast Notification */
+        /* Notifications */
         #toast {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
             background: var(--surface-light);
-            color: white;
             padding: 10px 20px;
-            border-radius: 50px;
-            z-index: 200;
+            border-radius: 20px;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s;
-            font-size: 0.9rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
-        #toast.visible { opacity: 1; top: 30px; }
+        #toast.show { opacity: 1; }
 
-        /* Utilitaires */
-        .hidden { display: none !important; }
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .text-center { text-align: center; }
-
-        /* Victoire */
-        #victory-display {
-            font-size: 2rem;
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .victory-anim { animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
+        #victory-text { text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; display: none; }
+        .win { color: var(--success); }
+        .lose { color: var(--text-muted); }
     </style>
 </head>
 <body>
 
-    <div id="toast">Notification</div>
+    <div id="toast">Message</div>
 
     <div id="app-container">
         <header>
             <div class="logo">MindSync</div>
-            <div class="score-board">Score: <span id="score-val">0</span></div>
+            <div class="score">Score: <span id="score">0</span></div>
         </header>
 
-        <!-- ECRAN 1: LOBBY -->
-        <main id="view-lobby" class="view active">
+        <!-- ÉCRAN 1 : LOBBY -->
+        <div id="view-lobby" class="view active">
             <div class="card">
-                <h2>Créer ou Rejoindre</h2>
-                <div style="margin: 20px 0;">
-                    <label>Ton ID unique</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="my-id-display" readonly value="Génération..." onclick="this.select()">
-                        <button class="btn btn-primary btn-icon" onclick="copyId()">📋</button>
-                    </div>
-                    <p style="font-size: 0.8rem; margin-top: 5px;">Envoie ce code à un ami.</p>
-                </div>
+                <h3>Bienvenue</h3>
+                <p>Ton ID :</p>
+                <input type="text" id="my-id" readonly value="Génération..." onclick="this.select()">
                 
-                <hr style="border: 0; border-top: 1px solid var(--surface-light); margin: 20px 0;">
-
-                <div class="input-group">
-                    <label>ID de l'ami</label>
-                    <input type="text" id="join-id-input" placeholder="Colle l'ID ici...">
-                </div>
+                <hr style="border: 0; border-top: 1px solid #334155; margin: 15px 0;">
                 
-                <button id="btn-connect" class="btn btn-primary" onclick="connectToPeer()">
-                    <span>🚀 Se connecter</span>
-                </button>
+                <p> ID de l'ami :</p>
+                <input type="text" id="friend-id" placeholder="Colle l'ID ici...">
+                <button class="btn-primary" onclick="connect()">JOUER</button>
             </div>
-        </main>
+        </div>
 
-        <!-- ECRAN 2: JEU -->
-        <main id="view-game" class="view">
-            <div id="victory-display">✨ SYNCHRO ! ✨</div>
-            
-            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Tapez un mot, puis cliquez sur PRÊT en même temps.</p>
+        <!-- ÉCRAN 2 : JEU -->
+        <div id="view-game" class="view">
+            <div id="victory-text">SYNCHRO !</div>
 
-            <div class="game-area">
+            <div class="game-board">
                 <!-- Carte Moi -->
-                <div class="player-card" id="p-card-me">
+                <div class="game-card" id="card-me">
                     <div class="card-inner">
                         <div class="card-front">
-                            <span class="card-label">Moi</span>
-                            <div id="me-word-display" class="card-content">?</div>
-                            <div class="status-dot"></div>
+                            <span class="label">Moi</span>
+                            <div class="word" id="me-word-front">?</div>
+                            <div class="ready-indicator"></div>
                         </div>
                         <div class="card-back">
-                            <span class="card-label">Mot</span>
-                            <div id="me-word-hidden" class="card-content"></div>
+                            <span class="label">Mot</span>
+                            <div class="word" id="me-word-back"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Carte Ami -->
-                <div class="player-card" id="p-card-friend">
+                <div class="game-card" id="card-friend">
                     <div class="card-inner">
                         <div class="card-front">
-                            <span class="card-label">Ami</span>
-                            <div id="friend-word-display" class="card-content">?</div>
-                            <div class="status-dot"></div>
+                            <span class="label">Ami</span>
+                            <div class="word" id="friend-word-front">?</div>
+                            <div class="ready-indicator"></div>
                         </div>
                         <div class="card-back">
-                            <span class="card-label">Mot</span>
-                            <div id="friend-word-hidden" class="card-content"></div>
+                            <span class="label">Mot</span>
+                            <div class="word" id="friend-word-back"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card" style="margin-bottom: 20px; padding: 15px;">
-                <input type="text" id="game-input" placeholder="Ton mot secret..." autocomplete="off">
-                <button id="btn-ready" class="btn btn-primary" style="margin-top: 10px;" onclick="sendWord()" disabled>PRÊT</button>
+            <div class="card">
+                <input type="text" id="game-input" placeholder="Ton mot secret..." oninput="updateInput()">
+                <button id="btn-ready" class="btn-primary" onclick="sendWord()" disabled>PRÊT</button>
             </div>
-            
-            <button class="btn btn-secondary" onclick="resetGame()" style="margin-top: auto;">🔄 Recommencer la manche</button>
-        </main>
+
+            <button class="btn-secondary" onclick="resetRound()">Recommencer</button>
+        </div>
     </div>
 
-    <!-- Chat Widget -->
-    <button id="fab-chat" onclick="toggleChat()">
-        💬
-        <div id="badge-unread"></div>
-    </button>
-
-    <div id="chat-overlay">
+    <!-- CHAT -->
+    <button id="fab-chat" onclick="toggleChat()">💬</button>
+    <div id="chat-panel">
         <div class="chat-header">
-            <h3>Discussion</h3>
-            <button class="close-chat" onclick="toggleChat()">×</button>
+            <span>Chat</span>
+            <button class="close-btn" onclick="toggleChat()">×</button>
         </div>
-        <div id="chat-messages">
-            <div class="sys-msg">Connecté au chat de jeu</div>
-        </div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Message..." onkeypress="handleChatKey(event)">
-            <button class="btn btn-primary btn-icon" onclick="sendChat()">➤</button>
+        <div id="chat-messages"></div>
+        <div style="padding: 10px;">
+            <input type="text" id="chat-input" placeholder="Msg..." onkeypress="if(event.key==='Enter') sendChat()">
+            <button class="btn-primary" style="margin-top: 5px;" onclick="sendChat()">Envoyer</button>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURATION & ÉTAT ---
-        const peer = new Peer(null, { debug: 1 }); // debug:1 pour voir les erreurs
+        // --- JAVASCRIPT (Logique) ---
+        
+        const peer = new Peer();
         let conn = null;
         let myWord = "";
         let friendWord = "";
-        let isReadyMe = false;
-        let isReadyFriend = false;
         let score = 0;
-        let isChatOpen = false;
+        let readyMe = false;
+        let readyFriend = false;
 
-        // --- ÉLÉMENTS DOM ---
-        const ui = {
-            views: {
-                lobby: document.getElementById('view-lobby'),
-                game: document.getElementById('view-game')
-            },
-            lobby: {
-                myId: document.getElementById('my-id-display'),
-                joinId: document.getElementById('join-id-input'),
-                btnConnect: document.getElementById('btn-connect')
-            },
-            game: {
-                cardMe: document.getElementById('p-card-me'),
-                cardFriend: document.getElementById('p-card-friend'),
-                innerMe: document.querySelector('#p-card-me .card-inner'),
-                innerFriend: document.querySelector('#p-card-friend .card-inner'),
-                txtMe: document.getElementById('me-word-display'),
-                txtFriend: document.getElementById('friend-word-display'),
-                hiddenMe: document.getElementById('me-word-hidden'),
-                hiddenFriend: document.getElementById('friend-word-hidden'),
-                input: document.getElementById('game-input'),
-                btnReady: document.getElementById('btn-ready'),
-                victory: document.getElementById('victory-display')
-            },
-            chat: {
-                panel: document.getElementById('chat-overlay'),
-                msgs: document.getElementById('chat-messages'),
-                input: document.getElementById('chat-input'),
-                badge: document.getElementById('badge-unread')
-            },
-            score: document.getElementById('score-val'),
-            toast: document.getElementById('toast')
+        // Sélecteurs DOM
+        const els = {
+            lobby: document.getElementById('view-lobby'),
+            game: document.getElementById('view-game'),
+            myId: document.getElementById('my-id'),
+            friendId: document.getElementById('friend-id'),
+            gameInput: document.getElementById('game-input'),
+            btnReady: document.getElementById('btn-ready'),
+            score: document.getElementById('score'),
+            victory: document.getElementById('victory-text'),
+            meCard: document.getElementById('card-me'),
+            friendCard: document.getElementById('card-friend'),
+            chatPanel: document.getElementById('chat-panel'),
+            chatMsgs: document.getElementById('chat-messages'),
+            chatInput: document.getElementById('chat-input')
         };
 
-        // --- INITIALISATION PEERJS ---
+        // Initialisation PeerJS
         peer.on('open', (id) => {
-            ui.lobby.myId.value = id;
-            showToast("ID généré avec succès", "success");
+            els.myId.value = id;
         });
 
-        peer.on('connection', (connection) => {
-            setupConnection(connection);
-            startGame();
+        // Si quelqu'un se connecte à moi
+        peer.on('connection', (c) => {
+            conn = c;
+            setupConn();
+            goToGame();
         });
 
-        peer.on('error', (err) => {
-            console.error(err);
-            showToast("Erreur réseau: " + err.type, "error");
-        });
-
-        // --- LOGIQUE DE CONNEXION ---
-        function connectToPeer() {
-            const friendId = ui.lobby.joinId.value.trim();
-            if (!friendId) {
-                showToast("Entrez un ID valide", "error");
-                return;
-            }
+        // Si je me connecte à quelqu'un
+        function connect() {
+            const id = els.friendId.value.trim();
+            if(!id) return alert("Entre un ID");
             
-            ui.lobby.btnConnect.innerHTML = '<span class="spin">⌛</span> Connexion...';
-            ui.lobby.btnConnect.disabled = true;
+            conn = peer.connect(id);
+            conn.on('open', () => {
+                setupConn();
+                goToGame();
+            });
+        }
 
-            const connection = peer.connect(friendId);
-            
-            // Timeout de sécurité si la connexion échoue
-            setTimeout(() => {
-                if (!conn) {
-                    ui.lobby.btnConnect.innerHTML = '🚀 Se connecter';
-                    ui.lobby.btnConnect.disabled = false;
-                    showToast("La connexion a échoué (ID invalide ou hors-ligne)", "error");
+        function setupConn() {
+            conn.on('data', (data) => {
+                if (data.type === 'WORD') {
+                    friendWord = data.val;
+                    readyFriend = true;
+                    els.friendCard.classList.add('ready');
+                    document.getElementById('friend-word-front').innerText = "PRÊT";
+                    checkReady();
+                } else if (data.type === 'CHAT') {
+                    addMsg(data.val, 'friend');
                 }
-            }, 5000);
-
-            connection.on('open', () => {
-                setupConnection(connection);
-                startGame();
             });
+            conn.on('close', () => alert("Déconnecté"));
         }
 
-        function setupConnection(connection) {
-            conn = connection;
-            conn.on('data', handleData);
-            conn.on('close', () => {
-                alert("L'ami s'est déconnecté.");
-                location.reload();
-            });
+        function goToGame() {
+            els.lobby.classList.remove('active');
+            els.game.classList.add('active');
+            showToast("Connecté !");
         }
 
-        function startGame() {
-            switchView('game');
-            showToast("Connecté ! C'est parti !", "success");
+        // Logique Jeu
+        function updateInput() {
+            myWord = els.gameInput.value.trim();
+            els.btnReady.disabled = myWord === "";
+            document.getElementById('me-word-front').innerText = myWord || "?";
         }
-
-        // --- LOGIQUE DU JEU ---
-        
-        // Surveillance de l'input pour activer le bouton Prêt
-        ui.game.input.addEventListener('input', (e) => {
-            myWord = e.target.value.trim();
-            ui.game.btnReady.disabled = myWord.length === 0;
-            ui.game.txtMe.innerText = myWord ? myWord : "?";
-        });
-
-        ui.game.input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !ui.game.btnReady.disabled) {
-                sendWord();
-            }
-        });
 
         function sendWord() {
-            if (!conn) return;
-            isReadyMe = true;
-            ui.game.cardMe.classList.add('ready');
-            ui.game.input.disabled = true;
-            ui.game.btnReady.style.display = 'none'; // Cacher le bouton
+            if(!conn) return;
+            readyMe = true;
+            els.meCard.classList.add('ready');
+            els.gameInput.disabled = true;
+            els.btnReady.style.display = 'none'; // Cacher le bouton
             
-            // Envoi du mot
-            sendPacket({ type: 'WORD', val: myWord });
-            
-            checkReveal();
+            conn.send({ type: 'WORD', val: myWord });
+            checkReady();
         }
 
-        function handleData(data) {
-            if (data.type === 'CHAT') {
-                addChatMessage(data.val, 'friend');
-            } else if (data.type === 'WORD') {
-                friendWord = data.val;
-                isReadyFriend = true;
-                ui.game.cardFriend.classList.add('ready');
-                ui.game.txtFriend.innerText = "PRÊT";
-                checkReveal();
-            }
-        }
-
-        function checkReveal() {
-            if (isReadyMe && isReadyFriend) {
-                // Petit délai pour la tension
-                setTimeout(() => {
-                    revealCards();
-                }, 500);
+        function checkReady() {
+            if (readyMe && readyFriend) {
+                setTimeout(revealCards, 500);
             }
         }
 
         function revealCards() {
             // Remplir le dos des cartes
-            ui.game.hiddenMe.innerText = myWord;
-            ui.game.hiddenFriend.innerText = friendWord;
+            document.getElementById('me-word-back').innerText = myWord;
+            document.getElementById('friend-word-back').innerText = friendWord;
 
-            // Animation de retournement
-            ui.game.innerMe.classList.add('flipped');
-            ui.game.innerFriend.classList.add('flipped');
+            // Retourner les cartes
+            document.querySelector('#card-me .card-inner').classList.add('flipped');
+            document.querySelector('#card-friend .card-inner').classList.add('flipped');
 
-            // Vérification victoire
+            // Vérifier victoire
+            els.victory.style.display = 'block';
             if (myWord.toLowerCase() === friendWord.toLowerCase()) {
                 score++;
-                ui.score.innerText = score;
-                ui.game.victory.innerText = "✨ SYNCHRO ! ✨";
-                ui.game.victory.style.color = "var(--success)";
-                ui.game.victory.style.display = "block";
-                ui.game.victory.classList.add('victory-anim');
+                els.score.innerText = score;
+                els.victory.innerText = "SYNCHRO !";
+                els.victory.className = "win";
             } else {
-                ui.game.victory.innerText = "Raté ! 😢";
-                ui.game.victory.style.color = "var(--text-muted)";
-                ui.game.victory.style.display = "block";
-                ui.game.victory.classList.remove('victory-anim');
+                els.victory.innerText = "Raté...";
+                els.victory.className = "lose";
             }
         }
 
-        function resetGame() {
-            isReadyMe = false;
-            isReadyFriend = false;
+        function resetRound() {
+            readyMe = false;
+            readyFriend = false;
             myWord = "";
             friendWord = "";
 
-            // Reset UI
-            ui.game.innerMe.classList.remove('flipped');
-            ui.game.innerFriend.classList.remove('flipped');
+            // Reset UI visuel
+            document.querySelector('#card-me .card-inner').classList.remove('flipped');
+            document.querySelector('#card-friend .card-inner').classList.remove('flipped');
             
+            // Attendre la fin de l'animation pour reset le texte
             setTimeout(() => {
-                ui.game.txtMe.innerText = "?";
-                ui.game.txtFriend.innerText = "?";
-                ui.game.input.value = "";
-                ui.game.input.disabled = false;
-                ui.game.btnReady.style.display = "flex";
-                ui.game.btnReady.disabled = true;
+                document.getElementById('me-word-front').innerText = "?";
+                document.getElementById('friend-word-front').innerText = "?";
                 
-                ui.game.cardMe.classList.remove('ready');
-                ui.game.cardFriend.classList.remove('ready');
-                ui.game.victory.style.display = "none";
+                els.gameInput.value = "";
+                els.gameInput.disabled = false;
+                els.btnReady.style.display = 'block';
+                els.btnReady.disabled = true;
                 
-                ui.game.input.focus();
-            }, 300); // Attendre la fin du demi-tour
+                els.meCard.classList.remove('ready');
+                els.friendCard.classList.remove('ready');
+                els.victory.style.display = 'none';
+                els.gameInput.focus();
+            }, 300);
         }
 
-        // --- LOGIQUE CHAT ---
-        function toggleChat() {
-            isChatOpen = !isChatOpen;
-            ui.chat.panel.classList.toggle('open', isChatOpen);
-            if(isChatOpen) {
-                ui.chat.badge.style.display = 'none';
-                ui.chat.input.focus();
-            }
-        }
-
-        function handleChatKey(e) {
-            if (e.key === 'Enter') sendChat();
-        }
-
+        // Logique Chat
+        function toggleChat() { els.chatPanel.classList.toggle('open'); }
+        
         function sendChat() {
-            const txt = ui.chat.input.value.trim();
-            if (!txt || !conn) return;
-            
-            sendPacket({ type: 'CHAT', val: txt });
-            addChatMessage(txt, 'me');
-            ui.chat.input.value = "";
+            const txt = els.chatInput.value.trim();
+            if(!txt || !conn) return;
+            conn.send({ type: 'CHAT', val: txt });
+            addMsg(txt, 'me');
+            els.chatInput.value = "";
         }
 
-        function addChatMessage(txt, sender) {
-            const div = document.createElement('div');
-            div.className = `message msg-${sender}`;
-            div.innerText = txt;
-            ui.chat.msgs.appendChild(div);
-            ui.chat.msgs.scrollTop = ui.chat.msgs.scrollHeight;
-
-            if (!isChatOpen && sender === 'friend') {
-                ui.chat.badge.style.display = 'block';
-            }
+        function addMsg(txt, who) {
+            const d = document.createElement('div');
+            d.className = `msg msg-${who}`;
+            d.innerText = txt;
+            els.chatMsgs.appendChild(d);
+            els.chatMsgs.scrollTop = els.chatMsgs.scrollHeight;
         }
 
-        // --- UTILITAIRES ---
-        function sendPacket(data) {
-            if (conn && conn.open) {
-                conn.send(data);
-            }
+        // Utilitaire
+        function showToast(txt) {
+            const t = document.getElementById('toast');
+            t.innerText = txt;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
         }
-
-        function switchView(viewName) {
-            Object.values(ui.views).forEach(el => el.classList.remove('active'));
-            ui.views[viewName].classList.add('active');
-        }
-
-        function copyId() {
-            ui.lobby.myId.select();
-            navigator.clipboard.writeText(ui.lobby.myId.value).then(() => {
-                showToast("ID copié !", "success");
-            });
-        }
-
-        function showToast(msg, type) {
-            ui.toast.innerText = msg;
-            ui.toast.style.borderLeft = type === 'error' ? '4px solid red' : '4px solid var(--success)';
-            ui.toast.classList.add('visible');
-            setTimeout(() => {
-                ui.toast.classList.remove('visible');
-            }, 3000);
-        }
-
     </script>
-</body>
-</html>
-            --bg: #f8fafc;
-            --text: #1e293b;
-            --error: #ef4444;
-            --success: #22c55e;
-        }
-        body { background-color: var(--bg); color: var(--text); font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; }
-        
-        .container { max-width: 500px; margin: 0 auto; width: 100%; flex: 1; display: flex; flex-direction: column; }
-        .hidden { display: none !important; }
-        
-        /* UI ELEMENTS */
-        .btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
-        .btn:active { transform: scale(0.98); }
-        .btn:disabled { background: #ccc; }
-        
-        input { padding: 15px; border: 2px solid #ccc; border-radius: 8px; width: 100%; font-size: 1.2rem; text-align: center; margin-bottom: 10px; box-sizing: border-box; }
-        input:focus { border-color: var(--primary); outline: none; }
-
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; margin-bottom: 20px; }
-        .big-text { font-size: 2rem; font-weight: bold; margin: 10px 0; color: var(--primary); }
-
-        /* LOGS CONSOLE VISUELLE */
-        #debug-log {
-            background: #1e1e1e; color: #00ff00; font-family: monospace; font-size: 12px;
-            padding: 10px; border-radius: 8px; height: 150px; overflow-y: auto; margin-top: auto;
-            border: 2px solid #444; white-space: pre-wrap;
-        }
-        .log-error { color: #ff4444; font-weight: bold; }
-        .log-info { color: #aaaaaa; }
-        .log-success { color: #00ff00; }
-
-        /* ZONE JEU */
-        .game-row { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
-        .player-card { background: white; padding: 15px; border-radius: 8px; flex: 1; text-align: center; border: 2px solid transparent; }
-        .player-card.active { border-color: var(--primary); }
-        .player-card.ready { border-color: var(--success); background: #f0fdf4; }
-        .player-card.win { border-color: gold; background: #fffbeb; animation: pulse 1s infinite; }
-
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); } }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    
-    <!-- ECRAN LOBBY -->
-    <div id="lobby-screen" class="card">
-        <h1>Synchrone 🧠</h1>
-        <p>Version Diagnostic</p>
-        
-        <button class="btn" onclick="initGame()">Créer une salle</button>
-        
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-        
-        <input type="text" id="join-input" placeholder="Code (ex: 84219)">
-        <button class="btn" style="background: white; color: black; border: 1px solid #ccc;" onclick="joinGame()">Rejoindre</button>
-
-        <div id="my-code-display" class="hidden" style="margin-top: 20px;">
-            <p>Votre code :</p>
-            <div class="big-text" id="code-text">---</div>
-            <button class="btn" onclick="copyCode()">Copier le code</button>
-        </div>
-    </div>
-
-    <!-- ECRAN JEU -->
-    <div id="game-screen" class="hidden">
-        <div class="game-row">
-            <div class="player-card" id="card-opp">
-                <div>Adversaire</div>
-                <div id="word-opp" class="big-text">...</div>
-                <div id="status-opp" style="font-size: 0.9rem; color: #666;">En attente</div>
-            </div>
-        </div>
-
-        <div class="game-row">
-            <div class="player-card active" id="card-me">
-                <div>Moi</div>
-                <div id="word-me" class="big-text">?</div>
-                <input type="text" id="my-word" placeholder="Votre mot..." autocomplete="off" style="margin-top: 10px;">
-                <button class="btn" id="btn-submit" onclick="submitWord()">Valider</button>
-                <button class="btn hidden" id="btn-restart" onclick="restartGame()">Rejouer</button>
-            </div>
-        </div>
-        
-        <!-- Chat simplifié -->
-        <div style="margin-top: 10px; display:flex; gap:5px;">
-            <input type="text" id="chat-input" placeholder="Chat..." style="padding: 10px; font-size: 0.9rem;">
-            <button class="btn" style="width: auto; padding: 0 15px;" onclick="sendChat()">Envoyer</button>
-        </div>
-        <div id="chat-box" style="height: 60px; overflow-y: auto; background: #f1f5f9; border-radius: 8px; padding: 5px; font-size: 0.8rem; margin-bottom: 10px;"></div>
-    </div>
-
-    <!-- CONSOLE DE DEBUG -->
-    <div id="debug-log">Journal système en attente...</div>
-</div>
-
-<script>
-    // --- LOGS ---
-    function log(msg, type = 'normal') {
-        const box = document.getElementById('debug-log');
-        const time = new Date().toLocaleTimeString();
-        let colorClass = '';
-        if(type === 'error') colorClass = 'log-error';
-        else if(type === 'success') colorClass = 'log-success';
-        else if(type === 'info') colorClass = 'log-info';
-        
-        box.innerHTML += `<div class="${colorClass}">[${time}] ${msg}</div>`;
-        box.scrollTop = box.scrollHeight;
-        console.log(msg);
-    }
-
-    // --- VERIFICATION INITIALISATION ---
-    window.onload = function() {
-        if (typeof Peer === 'undefined') {
-            log("ERREUR CRITIQUE : La librairie PeerJS n'a pas pu être chargée.", "error");
-            log("Cause probable : Adblock ou pare-feu entreprise bloquant 'cdnjs.cloudflare.com'.", "error");
-            alert("Erreur : Le script du jeu est bloqué par votre navigateur/réseau.");
-        } else {
-            log("Librairie chargée avec succès.", "success");
-        }
-    };
-
-    let peer = null;
-    let conn = null;
-    let myCode = null;
-    
-    const state = { myWord: "", oppWord: "", amReady: false, oppReady: false };
-    
-    // --- CREATION SALLE (ID COURT) ---
-    function initGame() {
-        document.getElementById('lobby-screen').querySelector('button').disabled = true;
-        document.getElementById('lobby-screen').querySelector('button').textContent = "Recherche d'un ID libre...";
-        
-        tryShortId(0);
-    }
-
-    function tryShortId(attempt) {
-        if (attempt > 15) {
-            log("Trop de tentatives échouées. Serveur saturé ?", "error");
-            alert("Impossible de créer un code libre. Réessayez dans 2 minutes.");
-            location.reload();
-            return;
-        }
-
-        // Génération ID 5 chiffres
-        const shortId = Math.floor(10000 + Math.random() * 90000).toString();
-        log(`Tentative ID Court : ${shortId}...`, "info");
-
-        // Configuration PeerJS robuste
-        peer = new Peer(shortId, {
-            debug: 1,
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            }
-        });
-
-        peer.on('open', (id) => {
-            log(`ID Créé avec succès : ${id}`, "success");
-            myCode = id;
-            document.getElementById('code-text').textContent = myCode;
-            document.getElementById('my-code-display').classList.remove('hidden');
-            document.querySelector('.lobby-actions')?.remove(); // Nettoyage UI
-            
-            peer.on('connection', (c) => {
-                log("Un joueur arrive !", "success");
-                setupConnection(c);
-            });
-        });
-
-        peer.on('error', (err) => {
-            if (err.type === 'unavailable-id') {
-                log(`ID ${shortId} déjà pris. Réessai...`, "info");
-                peer.destroy();
-                tryShortId(attempt + 1);
-            } else {
-                log(`Erreur PeerJS : ${err.type}`, "error");
-                log(`Détail : ${err.message}`, "error");
-            }
-        });
-    }
-
-    // --- REJOINDRE ---
-    function joinGame() {
-        const targetId = document.getElementById('join-input').value.trim();
-        if (!targetId) return alert("Entrez un code");
-
-        log(`Tentative de connexion au code ${targetId}...`, "info");
-
-        peer = new Peer({
-            debug: 1,
-            config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-        });
-
-        peer.on('open', () => {
-            log("Connecté au serveur de signalisation.", "success");
-            const c = peer.connect(targetId);
-            setupConnection(c);
-        });
-
-        peer.on('error', (err) => {
-            log(`Erreur connexion : ${err.type}`, "error");
-            if(err.type === 'peer-unavailable') {
-                alert("Ce code n'existe pas ou n'est plus en ligne.");
-            } else {
-                alert("Erreur de connexion réseau.");
-            }
-        });
-    }
-
-    function setupConnection(c) {
-        conn = c;
-        
-        conn.on('open', () => {
-            log("CANAL P2P OUVERT. Jeu prêt.", "success");
-            document.getElementById('lobby-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
-        });
-
-        conn.on('data', (data) => handleData(data));
-        conn.on('close', () => {
-            log("Déconnecté par l'autre joueur.", "error");
-            location.reload();
-        });
-        conn.on('error', (err) => {
-            log(`Erreur DataChannel : ${err.type}`, "error");
-        });
-    }
-
-    // --- JEU ---
-    function handleData(data) {
-        if (data.type === 'COMMIT') {
-            state.oppWord = data.word;
-            state.oppReady = true;
-            document.getElementById('word-opp').textContent = "PRÊT";
-            document.getElementById('card-opp').classList.add('ready');
-            document.getElementById('status-opp').textContent = "Mot entré";
-            log("Adversaire a validé son mot.", "info");
-            checkResult();
-        }
-        else if (data.type === 'CHAT') {
-            const box = document.getElementById('chat-box');
-            box.innerHTML += `<div style="color:blue;">Lui: ${data.msg}</div>`;
-            box.scrollTop = box.scrollHeight;
-        }
-        else if (data.type === 'RESET') {
-            restartGameUI();
-        }
-    }
-
-    function submitWord() {
-        const w = document.getElementById('my-word').value.trim();
-        if (!w) return;
-
-        state.myWord = w;
-        state.amReady = true;
-        
-        document.getElementById('my-word').disabled = true;
-        document.getElementById('my-word').classList.add('hidden');
-        document.getElementById('btn-submit').classList.add('hidden');
-        document.getElementById('word-me').textContent = "PRÊT";
-        document.getElementById('card-me').classList.add('ready');
-
-        conn.send({ type: 'COMMIT', word: w });
-        log("Mon mot envoyé.", "info");
-        checkResult();
-    }
-
-    function checkResult() {
-        if (state.amReady && state.oppReady) {
-            log("Révélation des mots...", "info");
-            
-            document.getElementById('word-me').textContent = state.myWord;
-            document.getElementById('word-opp').textContent = state.oppWord;
-            
-            const isWin = state.myWord.toLowerCase() === state.oppWord.toLowerCase();
-            
-            if (isWin) {
-                log("VICTOIRE ! Mots identiques.", "success");
-                document.getElementById('card-me').classList.add('win');
-                document.getElementById('card-opp').classList.add('win');
-                document.getElementById('status-opp').textContent = "SYNCHRONISÉS !";
-            } else {
-                log("DÉFAITE. Mots différents.", "error");
-                document.getElementById('status-opp').textContent = "RATÉ";
-            }
-
-            document.getElementById('btn-restart').classList.remove('hidden');
-        }
-    }
-
-    function restartGame() {
-        conn.send({ type: 'RESET' });
-        restartGameUI();
-    }
-
-    function restartGameUI() {
-        state.myWord = ""; state.oppWord = ""; state.amReady = false; state.oppReady = false;
-        
-        document.getElementById('my-word').value = "";
-        document.getElementById('my-word').disabled = false;
-        document.getElementById('my-word').classList.remove('hidden');
-        document.getElementById('btn-submit').classList.remove('hidden');
-        document.getElementById('btn-restart').classList.add('hidden');
-        
-        document.getElementById('word-me').textContent = "?";
-        document.getElementById('word-opp').textContent = "...";
-        document.getElementById('status-opp').textContent = "En attente";
-        
-        document.getElementById('card-me').classList.remove('ready', 'win');
-        document.getElementById('card-opp').classList.remove('ready', 'win');
-        
-        log("Jeu réinitialisé.", "info");
-    }
-
-    function sendChat() {
-        const msg = document.getElementById('chat-input').value.trim();
-        if (!msg || !conn) return;
-        
-        conn.send({ type: 'CHAT', msg: msg });
-        const box = document.getElementById('chat-box');
-        box.innerHTML += `<div style="text-align:right;">Moi: ${msg}</div>`;
-        document.getElementById('chat-input').value = "";
-        box.scrollTop = box.scrollHeight;
-    }
-
-    function copyCode() {
-        navigator.clipboard.writeText(myCode).then(() => alert("Code copié !"));
-    }
-</script>
-
 </body>
 </html>
