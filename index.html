@@ -221,9 +221,8 @@
         }
         #toast.show { opacity: 1; }
 
-        #victory-text { text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; display: none; }
+        #victory-text { text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; min-height: 40px; }
         .win { color: var(--success); animation: pulse 0.5s infinite alternate; }
-        .lose { color: var(--text-muted); }
         @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
     </style>
 </head>
@@ -254,7 +253,7 @@
 
         <!-- ÉCRAN 2 : JEU -->
         <div id="view-game" class="view">
-            <div id="victory-text">SYNCHRO !</div>
+            <div id="victory-text"></div>
 
             <div class="game-board">
                 <!-- Carte Moi -->
@@ -293,7 +292,8 @@
                 <button id="btn-ready" class="btn-primary" onclick="sendWord()" disabled>PRÊT</button>
             </div>
 
-            <button class="btn-secondary" onclick="resetRound()">Recommencer</button>
+            <!-- Ce bouton est caché par défaut et s'affiche après la révélation -->
+            <button id="btn-next" class="btn-secondary" onclick="resetRound()" style="display:none;">Continuer</button>
         </div>
     </div>
 
@@ -330,6 +330,7 @@
             friendId: document.getElementById('friend-id'),
             gameInput: document.getElementById('game-input'),
             btnReady: document.getElementById('btn-ready'),
+            btnNext: document.getElementById('btn-next'),
             score: document.getElementById('score'),
             victory: document.getElementById('victory-text'),
             meCard: document.getElementById('card-me'),
@@ -418,7 +419,7 @@
             readyMe = true;
             els.meCard.classList.add('ready');
             els.gameInput.disabled = true;
-            els.btnReady.style.display = 'none'; // Cacher le bouton
+            els.btnReady.style.display = 'none'; // Cacher le bouton Prêt
             
             conn.send({ type: 'WORD', val: myWord });
             checkReady();
@@ -440,16 +441,19 @@
             document.querySelector('#card-friend .card-inner').classList.add('flipped');
 
             // Vérifier victoire
-            els.victory.style.display = 'block';
             if (myWord.toLowerCase() === friendWord.toLowerCase()) {
                 score++;
                 els.score.innerText = score;
                 els.victory.innerText = "SYNCHRO !";
                 els.victory.className = "win";
+                els.btnNext.innerText = "Recommencer"; // Mot clé si victoire
             } else {
-                els.victory.innerText = "Raté...";
-                els.victory.className = "lose";
+                els.victory.innerText = "";
+                els.victory.className = "";
+                els.btnNext.innerText = "Continuer"; // Mot clé si défaite
             }
+            
+            els.btnNext.style.display = 'block'; // Afficher le bouton de suite
         }
 
         function resetRound() {
@@ -469,12 +473,17 @@
                 
                 els.gameInput.value = "";
                 els.gameInput.disabled = false;
-                els.btnReady.style.display = 'block';
+                els.btnReady.style.display = 'block'; // Réafficher bouton Prêt
                 els.btnReady.disabled = true;
+                
+                // Cacher le bouton "Continuer/Recommencer"
+                els.btnNext.style.display = 'none';
                 
                 els.meCard.classList.remove('ready');
                 els.friendCard.classList.remove('ready');
-                els.victory.style.display = 'none';
+                els.victory.style.display = 'none'; // Utiliser display:none pour cacher le texte
+                els.victory.className = "";
+                
                 els.gameInput.focus();
             }, 300);
         }
