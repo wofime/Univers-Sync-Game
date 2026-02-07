@@ -4,10 +4,258 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MindSync - Jeu de Synchro</title>
-    <!-- On garde le lien vers la librairie externe ici -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <!-- Lien vers ton fichier CSS -->
-    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --surface-light: #334155;
+            --primary: #8b5cf6;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-color);
+        }
+
+        header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--surface-light);
+            flex-shrink: 0;
+        }
+
+        .logo { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .score { background: var(--surface-light); padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; }
+
+        .view {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: hidden;
+        }
+        .view.active { display: flex; }
+
+        .card {
+            background: var(--surface-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid var(--surface-light);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 15px; 
+            border-radius: 8px;
+            border: 1px solid var(--surface-light);
+            background: #020617;
+            color: white;
+            font-size: 1.5rem; 
+            margin-bottom: 10px;
+            outline: none;
+            letter-spacing: 2px;
+            font-weight: bold;
+            text-align: center;
+        }
+        input[type="text"]:focus, input[type="number"]:focus { border-color: var(--primary); }
+        
+        #my-id.loaded {
+            border-color: var(--success);
+            color: var(--success);
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        input[readonly] { background: var(--surface-light); letter-spacing: 5px; }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            flex-shrink: 0;
+            margin-bottom: 10px;
+        }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
+        .btn-primary:disabled { background: var(--surface-light); opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+        .btn-secondary { background: var(--surface-light); color: white; margin-top: auto; }
+        .btn-small { font-size: 0.8rem; padding: 8px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); width: auto; align-self: center; }
+
+        .game-board {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0 20px 0;
+            flex-shrink: 0;
+        }
+
+        .game-card {
+            width: 48%;
+            aspect-ratio: 3/4;
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card-inner.flipped { transform: rotateY(180deg); }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            border: 2px solid var(--surface-light);
+        }
+
+        .card-front { background: var(--surface-color); }
+        .card-back { background: var(--primary); color: white; transform: rotateY(180deg); border-color: var(--primary); }
+
+        .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .word { font-size: 1.2rem; font-weight: bold; margin-top: 5px; word-break: break-word; }
+        
+        .ready-indicator {
+            width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px;
+            transition: 0.3s;
+        }
+        .game-card.ready .ready-indicator { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .game-card.ready .card-front { border-color: var(--success); }
+
+        /* Chat & Notification */
+        #fab-chat {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 20;
+        }
+
+        /* Badge de notification */
+        #chat-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444; /* Rouge */
+            color: white;
+            font-size: 0.75rem;
+            font-weight: bold;
+            height: 20px;
+            min-width: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 2px solid var(--bg-color);
+            display: none; /* Caché par défaut */
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        #chat-panel {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100%;
+            background: var(--surface-color);
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            border-left: 2px solid var(--surface-light);
+            z-index: 10;
+        }
+        #chat-panel.open { right: 0; }
+
+        #chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .msg { padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; max-width: 80%; animation: popIn 0.2s; }
+        .msg-me { align-self: flex-end; background: var(--primary); color: white; }
+        .msg-friend { align-self: flex-start; background: var(--surface-light); color: white; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .chat-header { padding: 15px; background: #0f172a; display: flex; justify-content: space-between; }
+        .close-btn { background: none; border: none; color: white; font-size: 1.5rem; width: auto; }
+
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-light);
+            padding: 10px 20px;
+            border-radius: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+        #toast.show { opacity: 1; }
+
+        #victory-text { text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; min-height: 40px; flex-shrink: 0; }
+        .win { color: var(--success); animation: pulse 0.5s infinite alternate; }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+    </style>
 </head>
 <body>
 
@@ -22,13 +270,15 @@
         <!-- ÉCRAN 1 : LOBBY -->
         <div id="view-lobby" class="view active">
             <div class="card">
-                <h3>Bienvenue</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Ton code à 5 chiffres :</p>
-                <input type="text" id="my-id" readonly value="..." onclick="this.select()">
+                <h3>Ton Code</h3>
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Donne ce code à 5 chiffres :</p>
+                <input type="text" id="my-id" readonly value="Chargement...">
+                
+                <button class="btn-small" onclick="initShortPeer()">Changer le code</button>
                 
                 <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
                 
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Code de l'ami :</p>
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Code de l'ami :</p>
                 <input type="number" id="friend-id" placeholder="Ex: 12345">
                 <button class="btn-primary" onclick="connect()">JOUER</button>
             </div>
@@ -75,13 +325,15 @@
                 <button id="btn-ready" class="btn-primary" onclick="sendWord()" disabled>PRÊT</button>
             </div>
 
-            <!-- Ce bouton est caché par défaut et s'affiche après la révélation -->
             <button id="btn-next" class="btn-secondary" onclick="resetRound()" style="display:none;">Continuer</button>
         </div>
     </div>
 
-    <!-- CHAT -->
-    <button id="fab-chat" onclick="toggleChat()">💬</button>
+    <!-- CHAT AVEC NOTIFICATION -->
+    <button id="fab-chat" onclick="toggleChat()">
+        💬
+        <div id="chat-badge">0</div>
+    </button>
     <div id="chat-panel">
         <div class="chat-header">
             <span>Chat</span>
@@ -94,7 +346,271 @@
         </div>
     </div>
 
-    <!-- Lien vers ton fichier JS (à la fin du body) -->
-    <script src="script.js"></script>
+    <script>
+        let peer;
+        let conn = null;
+        let myWord = "";
+        let friendWord = "";
+        let score = 0;
+        let readyMe = false;
+        let readyFriend = false;
+        
+        // Variables pour notifications
+        let isChatOpen = false;
+        let unreadCount = 0;
+
+        // Sélecteurs DOM
+        const els = {
+            lobby: document.getElementById('view-lobby'),
+            game: document.getElementById('view-game'),
+            myId: document.getElementById('my-id'),
+            friendId: document.getElementById('friend-id'),
+            gameInput: document.getElementById('game-input'),
+            btnReady: document.getElementById('btn-ready'),
+            btnNext: document.getElementById('btn-next'),
+            score: document.getElementById('score'),
+            victory: document.getElementById('victory-text'),
+            meCard: document.getElementById('card-me'),
+            friendCard: document.getElementById('card-friend'),
+            chatPanel: document.getElementById('chat-panel'),
+            chatMsgs: document.getElementById('chat-messages'),
+            chatInput: document.getElementById('chat-input'),
+            badge: document.getElementById('chat-badge')
+        };
+
+        // --- SON DE NOTIFICATION (Web Audio API) ---
+        function playNotificationSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.type = 'sine';
+                // Son "Ding" montant
+                osc.frequency.setValueAtTime(500, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.1);
+                
+                // Volume qui baisse
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            } catch (e) {
+                console.error("Audio error", e);
+            }
+        }
+
+        function updateBadge() {
+            if (unreadCount > 0) {
+                els.badge.innerText = unreadCount;
+                els.badge.style.display = 'flex';
+            } else {
+                els.badge.style.display = 'none';
+            }
+        }
+
+        // --- LOGIQUE ID COURT (5 CHIFFRES) ---
+        function initShortPeer() {
+            if (peer && !peer.destroyed) {
+                peer.destroy();
+            }
+            els.myId.value = "Génération...";
+            els.myId.classList.remove('loaded');
+
+            const shortId = Math.floor(10000 + Math.random() * 90000).toString();
+            
+            try {
+                peer = new Peer(shortId);
+
+                peer.on('open', (id) => {
+                    els.myId.value = id;
+                    els.myId.classList.add('loaded');
+                    showToast("Code prêt : " + id);
+                });
+
+                peer.on('error', (err) => {
+                    console.error(err);
+                    if (err.type === 'unavailable-id') {
+                        initShortPeer();
+                    } else if (err.type === 'peer-unavailable') {
+                        alert("L'ami n'est pas en ligne ou code faux");
+                    } else {
+                        els.myId.value = "Erreur";
+                    }
+                });
+                
+                peer.on('connection', (c) => {
+                    conn = c;
+                    setupConn();
+                    goToGame();
+                });
+            } catch(e) {
+                console.log("Erreur init peer", e);
+            }
+        }
+
+        initShortPeer();
+
+        // --- LOGIQUE JEU ---
+
+        function connect() {
+            const id = els.friendId.value.trim();
+            if(!id) return alert("Entre un code");
+            
+            if(!peer || peer.destroyed) {
+                alert("Erreur connexion. Relance la page.");
+                return;
+            }
+
+            conn = peer.connect(id);
+            conn.on('open', () => {
+                setupConn();
+                goToGame();
+            });
+            conn.on('error', () => alert("Impossible de se connecter. Vérifie le code."));
+        }
+
+        function setupConn() {
+            conn.on('data', (data) => {
+                if (data.type === 'WORD') {
+                    friendWord = data.val;
+                    readyFriend = true;
+                    els.friendCard.classList.add('ready');
+                    document.getElementById('friend-word-front').innerText = "PRÊT";
+                    checkReady();
+                } else if (data.type === 'CHAT') {
+                    // Gestion des notifications
+                    if (!isChatOpen) {
+                        unreadCount++;
+                        updateBadge();
+                        playNotificationSound();
+                    }
+                    addMsg(data.val, 'friend');
+                }
+            });
+            conn.on('close', () => alert("Déconnecté"));
+        }
+
+        function goToGame() {
+            els.lobby.classList.remove('active');
+            els.game.classList.add('active');
+            showToast("Connecté !");
+        }
+
+        function updateInput() {
+            myWord = els.gameInput.value.trim();
+            els.btnReady.disabled = myWord === "";
+            document.getElementById('me-word-front').innerText = myWord || "?";
+        }
+
+        function sendWord() {
+            if(!conn) return;
+            readyMe = true;
+            els.meCard.classList.add('ready');
+            els.gameInput.disabled = true;
+            els.btnReady.style.display = 'none';
+            
+            conn.send({ type: 'WORD', val: myWord });
+            checkReady();
+        }
+
+        function checkReady() {
+            if (readyMe && readyFriend) {
+                setTimeout(revealCards, 500);
+            }
+        }
+
+        function revealCards() {
+            document.getElementById('me-word-back').innerText = myWord;
+            document.getElementById('friend-word-back').innerText = friendWord;
+
+            document.querySelector('#card-me .card-inner').classList.add('flipped');
+            document.querySelector('#card-friend .card-inner').classList.add('flipped');
+
+            if (myWord.toLowerCase() === friendWord.toLowerCase()) {
+                score++;
+                els.score.innerText = score;
+                els.victory.innerText = "SYNCHRO !";
+                els.victory.className = "win";
+                els.btnNext.innerText = "Recommencer";
+            } else {
+                els.victory.innerText = "";
+                els.victory.className = "";
+                els.btnNext.innerText = "Continuer";
+            }
+            
+            els.btnNext.style.display = 'block';
+        }
+
+        function resetRound() {
+            readyMe = false;
+            readyFriend = false;
+            myWord = "";
+            friendWord = "";
+
+            document.querySelector('#card-me .card-inner').classList.remove('flipped');
+            document.querySelector('#card-friend .card-inner').classList.remove('flipped');
+            
+            setTimeout(() => {
+                document.getElementById('me-word-front').innerText = "?";
+                document.getElementById('friend-word-front').innerText = "?";
+                
+                els.gameInput.value = "";
+                els.gameInput.disabled = false;
+                els.btnReady.style.display = 'block';
+                els.btnReady.disabled = true;
+                
+                els.btnNext.style.display = 'none';
+                
+                els.meCard.classList.remove('ready');
+                els.friendCard.classList.remove('ready');
+                els.victory.style.display = 'none';
+                els.victory.className = "";
+                
+                els.gameInput.focus();
+            }, 300);
+        }
+
+        function toggleChat() { 
+            isChatOpen = !isChatOpen;
+            els.chatPanel.classList.toggle('open'); 
+            
+            if (isChatOpen) {
+                // Si on ouvre le chat, on marque comme lu
+                unreadCount = 0;
+                updateBadge();
+            }
+        }
+        
+        function sendChat() {
+            const txt = els.chatInput.value.trim();
+            if(!txt || !conn) return;
+            conn.send({ type: 'CHAT', val: txt });
+            addMsg(txt, 'me');
+            els.chatInput.value = "";
+        }
+
+        function addMsg(txt, who) {
+            const d = document.createElement('div');
+            d.className = `msg msg-${who}`;
+            d.innerText = txt;
+            els.chatMsgs.appendChild(d);
+            els.chatMsgs.scrollTop = els.chatMsgs.scrollHeight;
+        }
+
+        function showToast(txt) {
+            const t = document.getElementById('toast');
+            t.innerText = txt;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+    </script>
 </body>
 </html>
