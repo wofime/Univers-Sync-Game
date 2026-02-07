@@ -1,0 +1,224 @@
+/* --- CSS (Design & Animations) --- */
+:root {
+    --bg-color: #0f172a;
+    --surface-color: #1e293b;
+    --surface-light: #334155;
+    --primary: #8b5cf6; /* Violet */
+    --secondary: #ec4899; /* Rose */
+    --success: #10b981;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --radius: 16px;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden; /* Empêche le scroll global */
+}
+
+#app-container {
+    width: 100%;
+    max-width: 480px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: var(--bg-color);
+}
+
+/* En-tête */
+header {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.95);
+    border-bottom: 1px solid var(--surface-light);
+    flex-shrink: 0; /* Empêche l'en-tête de rétrécir */
+}
+
+.logo { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+.score { background: var(--surface-light); padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; }
+
+/* Pages (Views) */
+.view {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    padding: 20px;
+    /* MODIFICATION ICI : On force hidden pour enlever la barre latérale */
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+.view.active { display: flex; }
+
+/* Cartes et Inputs */
+.card {
+    background: var(--surface-color);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+    border: 1px solid var(--surface-light);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    flex-shrink: 0; /* Important pour le layout */
+}
+
+input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--surface-light);
+    background: #020617;
+    color: white;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    outline: none;
+    letter-spacing: 1px;
+}
+input[type="text"]:focus, input[type="number"]:focus { border-color: var(--primary); }
+input[readonly] { background: var(--surface-light); color: var(--secondary); font-weight: bold; letter-spacing: 3px; }
+
+button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    flex-shrink: 0;
+}
+.btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
+.btn-primary:disabled { background: var(--surface-light); opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.btn-secondary { background: var(--surface-light); color: white; margin-top: auto; /* Pousse le bouton vers le bas si besoin */ }
+
+/* Zone de Jeu (Cartes 3D) */
+.game-board {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0 20px 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.game-card {
+    width: 48%;
+    aspect-ratio: 3/4;
+    perspective: 1000px;
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.card-inner.flipped { transform: rotateY(180deg); }
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+    border: 2px solid var(--surface-light);
+}
+
+.card-front { background: var(--surface-color); }
+.card-back { background: var(--primary); color: white; transform: rotateY(180deg); border-color: var(--primary); }
+
+.label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.word { font-size: 1.2rem; font-weight: bold; margin-top: 5px; word-break: break-word; }
+
+.ready-indicator {
+    width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px;
+    transition: 0.3s;
+}
+.game-card.ready .ready-indicator { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.game-card.ready .card-front { border-color: var(--success); }
+
+/* Chat */
+#fab-chat {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--secondary);
+    color: white;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 20;
+}
+
+#chat-panel {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 300px;
+    height: 100%;
+    background: var(--surface-color);
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+    border-left: 2px solid var(--surface-light);
+    z-index: 10;
+}
+#chat-panel.open { right: 0; }
+
+#chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto; /* Le chat doit garder son scroll */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.msg { padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; max-width: 80%; animation: popIn 0.2s; }
+.msg-me { align-self: flex-end; background: var(--primary); color: white; }
+.msg-friend { align-self: flex-start; background: var(--surface-light); color: white; }
+@keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.chat-header { padding: 15px; background: #0f172a; display: flex; justify-content: space-between; }
+.close-btn { background: none; border: none; color: white; font-size: 1.5rem; width: auto; }
+
+/* Notifications */
+#toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface-light);
+    padding: 10px 20px;
+    border-radius: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 100;
+}
+#toast.show { opacity: 1; }
+
+#victory-text { text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; min-height: 40px; flex-shrink: 0;}
+.win { color: var(--success); animation: pulse 0.5s infinite alternate; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
