@@ -7,7 +7,6 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     
     <style>
-        /* --- STYLE --- */
         :root {
             --bg-color: #0f172a;
             --surface-color: #1e293b;
@@ -44,11 +43,14 @@
             background: var(--bg-color);
         }
 
-        /* --- HEADER (Grid Layout: Sandwich Left, MindSync Center) --- */
+        /* --- HEADER (Menu Left, Logo Center, Score Right) --- */
         header {
             padding: 15px 20px;
             display: grid;
-            grid-template-columns: auto 1fr auto; /* Sandwich - Centre - Score */
+            /* Col 1: Menu Bouton (Gauche) */
+            /* Col 2: MindSync (Centre) */
+            /* Col 3: Score (Droite) */
+            grid-template-columns: auto 1fr auto; 
             align-items: center;
             background: rgba(15, 23, 42, 0.95);
             border-bottom: 1px solid var(--surface-light);
@@ -57,17 +59,25 @@
             position: relative;
         }
 
-        .menu-btn { 
-            background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; padding: 0; margin: 0; 
-            justify-self: start; /* Colonne 1 : Gauche */
-            grid-column: 1;
+        .menu-btn {
+            background: none; 
+            border: none; 
+            color: var(--text-main); 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+            padding: 0;
+            margin: 0;
+            grid-column: 1; /* Gauche */
+            grid-row: 1; /* Centre (pour aligner verticalement si besoin, sinon stretch par défaut) */
+            justify-self: stretch;
         }
 
         .logo { 
-            font-size: 1.1rem; font-weight: bold; color: var(--primary); 
-            text-align: center; 
-            justify-self: center; /* Colonne 2 : Milieu */
-            grid-column: 2;
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+            flex-grow: 1; /* Prend de l'espace restant */
+            text-align: center; /* Centré text */
         }
 
         .score { 
@@ -75,9 +85,12 @@
             padding: 5px 12px; 
             border-radius: 20px; 
             font-size: 0.85rem; 
-            justify-self: end; /* Colonne 3 : Droite */
-            grid-column: 3;
-            text-align: right; padding-right: 10px;
+            flex-shrink: 0;
+            text-align: right; /* Droite le score */
+            padding-right: 10px; /* Espace pour l'icone/alignement */
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         /* --- VIEWS --- */
@@ -86,16 +99,45 @@
 
         /* --- CARDS & INPUTS --- */
         .card {
-            background: var(--surface-color); border-radius: var(--radius); padding: 20px; text-align: center; margin-bottom: 20px; border: 1px solid var(--surface-light); box-shadow: 0 4px 6px rgba(0,0,0,0.3); flex-shrink: 0; }
+            background: var(--surface-color); 
+            border-radius: var(--radius);
+            padding: 20px; 
+            border: 1px solid var(--surface-light);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+            flex-shrink: 0;
+        }
 
         input[type="text"], input[type="number"] {
-            width: 100%; padding: 15px; border-radius: 8px; border: 1px solid var(--surface-light); background: #020617; color: white; font-size: 1.5rem; margin-bottom: 10px; outline: none; letter-spacing: 2px; font-weight: bold; text-align: center; }
+            width: 100%;
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid var(--surface-light); 
+            background: #020617; 
+            color: white; 
+            font-size: 1.5rem; 
+            margin-bottom: 10px; 
+            outline: none; 
+            letter-spacing: 2px; 
+            font-weight: bold; 
+            text-align: center;
+        }
         input[type="text"]:focus, input[type="number"]:focus { border-color: var(--primary); }
-        
+
         #my-id.loaded { border-color: var(--success); color: var(--success); text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+
         input[readonly] { background: var(--surface-light); letter-spacing: 5px; cursor: pointer; }
 
-        button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; flex-shrink: 0; margin-bottom: 10px; }
+        button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px; 
+            border: none; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            flex-shrink: 0; 
+            margin-bottom: 10px;
+        }
         .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
         .btn-primary:disabled { background: var(--surface-light); opacity: 0.5; cursor: not-allowed; box-shadow: none; }
         .btn-secondary { background: var(--surface-light); color: white; margin-top: auto; }
@@ -106,54 +148,184 @@
         .game-card { width: 48%; aspect-ratio: 3/4; perspective: 1000px; }
         .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; }
         .card-inner.flipped { transform: rotateY(180deg); }
+
         .card-front, .card-back {
-            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 12px; border: 2px solid var(--surface-light);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            border: 2px solid var(--surface-light);
         }
         .card-front { background: var(--surface-color); }
         .card-back { background: var(--primary); color: white; transform: rotateY(180deg); border-color: var(--primary); }
+
         .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
         .word { font-size: 1.2rem; font-weight: bold; margin-top: 5px; word-break: break-word; }
-        .ready-indicator { width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px; transition: 0.3s; }
+        .ready-indicator {
+            width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px; transition: 0.3s; }
         .game-card.ready .ready-indicator { background: var(--success); box-shadow: 0 0 8px var(--success); }
         .game-card.ready .card-front { border-color: var(--success); }
 
         /* --- CHAT --- */
-        #fab-chat { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: var(--secondary); color: white; border: none; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 25; }
-        #chat-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 0.75rem; font-weight: bold; height: 20px; min-width: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid var(--bg-color); display: none; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #fab-chat {
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px; 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            background: var(--secondary); 
+            color: white; 
+            border: none; 
+            font-size: 1.2rem; 
+            cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+            z-index: 25; 
+        }
+
+        #chat-badge {
+            position: absolute; 
+            top: -5px; 
+            right: -5px; 
+            background: #ef4444; 
+            color: white; 
+            font-size: 0.75rem; 
+            font-weight: bold; 
+            height: 20px; 
+            min-width: 20px; 
+            border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            padding: 0 4px; 
+            border: 2px solid var(--bg-color); 
+            display: none; 
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
 
-        #chat-panel { position: fixed; top: 0; right: -300px; width: 300px; height: 100%; background: var(--surface-color); transition: 0.3s; display: flex; flex-direction: column; border-left: 2px solid var(--surface-light); z-index: 20; }
+        #chat-panel {
+            position: fixed; 
+            top: 0; 
+            right: -300px; 
+            width: 300px; 
+            height: 100%; 
+            background: var(--surface-color); 
+            transition: 0.3s; 
+            display: flex; flex-direction: column; 
+            border-left: 2px solid var(--surface-light); 
+            z-index: 20; 
+        }
         #chat-panel.open { right: 0; }
-        #chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+
+        #chat-messages {
+            flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; 
+        }
+
         .msg { padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; max-width: 80%; animation: popIn 0.2s; }
         .msg-me { align-self: flex-end; background: var(--primary); color: white; }
         .msg-friend { align-self: flex-start; background: var(--surface-light); color: white; }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
         .chat-header { padding: 15px; background: #0f172a; display: flex; justify-content: space-between; }
         .close-btn { background: none; border: none; color: white; font-size: 1.5rem; width: auto; }
 
         /* --- MENU LATÉRAL --- */
-        #side-menu { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background: var(--surface-color); transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 40; display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
+        #side-menu {
+            position: fixed;
+            top: 0; left: 0;
+            width: 280px;
+            height: 100%;
+            background: var(--surface-color); 
+            transform: translateX(-100%); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            z-index: 40; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 5px 0 15px rgba(0,0,0, 0.5); 
+        }
         #side-menu.open { transform: translateX(0); }
-        .menu-header { padding: 20px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; }
-        .menu-list { list-style: none; padding: 0; margin: 0; flex: 1; overflow-y: auto; }
-        .menu-item a { display: block; padding: 15px 20px; color: var(--text-main); text-decoration: none; border-bottom: 1px solid var(--surface-light); transition: background 0.2s; font-size: 1rem; }
+
+        .menu-header {
+            padding: 20px; 
+            background: var(--primary); 
+            color: white; 
+            font-weight: bold; 
+            font-size: 1.2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+
+        .menu-list { 
+            list-style: none; 
+            padding: 0; 
+            margin: 0; 
+            flex: 1; 
+            overflow-y: auto; 
+        }
+
+        .menu-item a {
+            display: block; 
+            padding: 15px 20px; 
+            color: var(--text-main); 
+            text-decoration: none; 
+            border-bottom: 1px solid var(--surface-light); 
+            transition: background 0.2s; 
+            font-size: 1rem; 
+        }
         .menu-item a:hover { background: var(--surface-light); }
         .menu-item a.active { color: var(--primary); border-left: 4px solid var(--primary); background: rgba(139, 92, 246, 0.1); }
-        #menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 35; display: none; opacity: 0; transition: opacity 0.3s; }
-        #menu-overlay.show { display: block; opacity: 1; }
+
+        #menu-overlay {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0, 0.5); 
+            z-index: 35; 
+            display: none; 
+            opacity: 0; 
+            transition: opacity 0.3s; 
+        }
+        #menu-overlay.show { display: block; opacity:1; }
 
         /* --- TOAST --- */
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--surface-light); padding: 10px 20px; border-radius: 20px; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 100; }
+        #toast {
+            position: fixed; 
+            top: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: var(--surface-light); 
+            padding: 10px 20px; 
+            border-radius: 20px; 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: opacity 0.3s; 
+            z-index: 100; 
+        }
         #toast.show { opacity: 1; }
 
-        #victory-text { text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; min-height: 40px; flex-shrink: 0; }
+        #victory-text { 
+            text-align: center; 
+            font-size: 1.5rem; 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            min-height: 40px; 
+            flex-shrink: 0; 
+        }
         .win { color: var(--success); animation: pulse 0.5s infinite alternate; }
-        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } 
     </style>
 </head>
 <body>
 
-    <!-- ÉLÉMENT AUDIO CACHÉ POUR LA MUSIQUE FICHIER -->
+    <!-- ÉLÉMENT AUDIO CACHÉ POUR LA MUSIQUE -->
+    <!-- Charge bgm.m4a -->
     <audio id="bgm-element" loop></audio>
 
     <div id="toast">Message</div>
@@ -169,12 +341,11 @@
     <div id="menu-overlay" onclick="toggleMenu()"></div>
 
     <div id="app-container">
-        <!-- EN-TÊTE MODIFIÉ : Grid Layout -->
         <header>
             <!-- 1. Bouton Menu (Gauche) -->
             <button class="menu-btn" onclick="toggleMenu()">☰</button>
             
-            <!-- 2. Titre (Centre) -->
+            <!-- 2. Titre MindSync (Centre) -->
             <div class="logo">MindSync</div>
             
             <!-- 3. Score (Droite) -->
@@ -258,7 +429,7 @@
     </div>
 
     <script>
-        // --- 1. SYSTÈME AUDIO COMPLET (M4A support + Volume 10%) ---
+        // --- 1. SYSTÈME AUDIO COMPLET (M4A support + Volume 10% + Ducking) ---
         const AudioEngine = {
             ctx: null,
             bgmElement: document.getElementById('bgm-element'),
@@ -267,13 +438,20 @@
             isInitialized: false,
 
             init: function() {
-                if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    this.isInitialized = true;
-                }
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                
-                // Charger les préférences volume
+                // Création de l'élément audio caché
+                this.bgmElement = document.createElement('audio');
+                this.bgmElement.id = 'bgm-element';
+                this.bgmElement.loop = true;
+                this.bgmElement.style.position = 'fixed';
+                this.bgmElement.style.bottom = '20px';
+                this.bgmElement.style.left = '50%';
+                this.bgmElement.style.transform = 'translateX(-50%)'; /* Centré horizontalement en bas */
+                this.bgmElement.style.visibility = 'hidden'; /* Invisible au début */
+
+                // Attacher l'élément au body (pour charger sans afficher le lecteur)
+                document.body.appendChild(this.bgmElement);
+
+                // Charger les préférences volume (ou 10% / 100% par défaut)
                 this.sfxVolume = parseFloat(localStorage.getItem('sfxVolume')) || 1.0;
                 this.bgmVolume = parseFloat(localStorage.getItem('musicVolume')) || 0.1;
                 
@@ -298,25 +476,32 @@
                 osc.stop(this.ctx.currentTime + duration);
             },
 
-            // Effets Jeu (Plus audibles)
-            playFlip: function() { 
-                this.playTone(400, 'triangle', 0.2, 1.5); 
-                this.playTone(600, 'sine', 0.2, 1.5); 
-            },
+            // Effets Jeu
+            playFlip: function() { this.playTone(400, 'sine', 0.2, 1.5); this.playTone(600, 'sine', 0.2, 1.5); },
             playWin: function() { 
                 this.playTone(523.25, 'sine', 0.6, 1.5); 
                 setTimeout(() => this.playTone(659.25, 'sine', 0.6, 1.5), 100); 
                 setTimeout(() => this.playTone(783.99, 'sine', 0.8, 1.5), 200);
             },
-            playLose: function() { 
-                this.playTone(150, 'sawtooth', 0.6, 2.0);
-            },
+            playLose: function() { this.playTone(200, 'sawtooth', 0.6, 2.0); },
+
+            // Chat avec DUCKING (Baisse musique)
             playChat: function() {
-                // "Bip" net et plus haut
-                this.playTone(800, 'square', 0.1, 0.8);
+                // 1. Sauvegarder le volume actuel de la musique
+                const originalVolume = this.bgmElement.volume;
+
+                // 2. Baisser la musique à 20%
+                this.bgmElement.volume = originalVolume * 0.2;
+
+                // 3. Jouer le son du chat (un peu plus fort)
+                this.playTone(800, 'square', 0.1, 1.5); 
+
+                // 4. Restaurer le volume après que le son est fini (300ms)
+                setTimeout(() => {
+                    this.bgmElement.volume = originalVolume;
+                }, 300);
             },
 
-            // Musique (Fichier M4A)
             startMusic: function() {
                 if (this.bgmVolume <= 0) return;
                 
@@ -325,15 +510,16 @@
                 this.bgmElement.volume = this.bgmVolume;
                 
                 // Gestion d'erreur si fichier pas là
-                this.bgmElement.onerror = () => { console.log("Fichier bgm.m4a introuvable. Musique désactivée."); this.stopMusic(); };
+                this.bgmElement.onerror = () => {
+                    console.log("Fichier bgm.m4a introuvable. Musique désactivée.");
+                    this.stopMusic();
+                };
 
                 const playPromise = this.bgmElement.play();
                 if (playPromise !== undefined) {
                     playPromise.then(_ => {
                         // Lecture démarrée
-                    }).catch(error => {
-                        console.error("Erreur lecture BGM:", error);
-                    });
+                    }).catch(error => console.error("Erreur lecture BGM:", error));
                 }
             },
 
@@ -342,15 +528,11 @@
                 this.bgmElement.currentTime = 0;
             },
 
-            // Mise à jour volume depuis les paramètres
             updateMusicVolume: function(val) {
                 this.bgmVolume = parseFloat(val);
                 this.bgmElement.volume = this.bgmVolume;
-                if (this.bgmVolume > 0 && document.getElementById('view-game').classList.contains('active')) {
-                    this.startMusic();
-                } else {
-                    this.stopMusic();
-                }
+                if (this.bgmVolume > 0 && document.getElementById('view-game').classList.contains('active')) this.startMusic();
+                else this.stopMusic();
             },
             
             updateSfxVolume: function(val) {
@@ -358,11 +540,8 @@
             },
 
             toggleMusicState: function() {
-                if (this.bgmVolume > 0 && document.getElementById('view-game').classList.contains('active')) {
-                    this.startMusic();
-                } else {
-                    this.stopMusic();
-                }
+                if (this.bgmVolume > 0 && document.getElementById('view-game').classList.contains('active')) this.startMusic();
+                else this.stopMusic();
             }
         };
 
@@ -372,7 +551,7 @@
             document.getElementById(viewId).classList.add('active');
             
             if (viewId === 'view-game') {
-                AudioEngine.init(); // Important pour activer l'audio context
+                AudioEngine.init();
                 AudioEngine.toggleMusicState();
             } else {
                 AudioEngine.stopMusic();
@@ -423,12 +602,14 @@
         }
 
         // --- 3. VARIABLES JEU ---
-        let peer, conn = null, myWord = "", friendWord = "", score = 0, readyMe = false, readyFriend = false;
+        let peer;
+        let conn = null, myWord = "", friendWord = "", score = 0, readyMe = false, readyFriend = false;
         let isChatOpen = false, unreadCount = 0;
 
         // Audio vars loaded from settings
-        // Note: Le code settings gère le localStorage, AudioEngine le lit ici.
-        
+        let soundEnabled = true; // Par défaut true
+        let musicEnabled = true; // Par défaut true
+
         const els = {
             lobby: document.getElementById('view-lobby'),
             game: document.getElementById('view-game'),
@@ -497,7 +678,7 @@
                     if (!isChatOpen) {
                         unreadCount++;
                         updateBadge();
-                        AudioEngine.playChat();
+                        AudioEngine.playChat(); // Appelle le Ducking ici
                     }
                     addMsg(data.val, 'friend');
                 }
@@ -526,7 +707,6 @@
         }
 
         function revealCards() {
-            AudioEngine.playFlip();
             document.getElementById('me-word-back').innerText = myWord;
             document.getElementById('friend-word-back').innerText = friendWord;
             document.querySelector('#card-me .card-inner').classList.add('flipped');
@@ -564,6 +744,8 @@
                 els.btnReady.style.display = 'block';
                 els.btnReady.disabled = true;
                 els.btnNext.style.display = 'none';
+                els.btnNext.style.display = 'none';
+                
                 els.meCard.classList.remove('ready');
                 els.friendCard.classList.remove('ready');
                 els.victory.style.display = 'none';
@@ -575,7 +757,10 @@
         function toggleChat() { 
             isChatOpen = !isChatOpen;
             els.chatPanel.classList.toggle('open'); 
-            if (isChatOpen) { unreadCount = 0; updateBadge(); }
+            if (isChatOpen) { 
+                unreadCount = 0; 
+                updateBadge(); 
+            } 
         }
         
         function sendChat() {
@@ -603,18 +788,14 @@
             }
         }
 
-        function showToast(txt) {
-            const t = document.getElementById('toast');
-            t.innerText = txt;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
-        }
-
         // --- Écouteur d'événements storage ---
         window.addEventListener('storage', (e) => {
             if (e.key === 'sfxVolume') AudioEngine.updateSfxVolume(e.newValue);
             if (e.key === 'musicVolume') AudioEngine.updateMusicVolume(e.newValue);
         });
+
+        // Exposer l'objet AudioEngine pour le menu (qui gère les curseurs)
+        window.AudioEngine = AudioEngine;
     </script>
 </body>
 </html>
