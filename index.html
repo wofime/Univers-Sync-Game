@@ -43,19 +43,34 @@
             background: var(--bg-color);
         }
 
+        /* --- HEADER --- */
         header {
-            padding: 15px 20px;
+            padding: 15px 15px 15px 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: rgba(15, 23, 42, 0.95);
             border-bottom: 1px solid var(--surface-light);
             flex-shrink: 0;
+            z-index: 20;
+            position: relative;
         }
 
-        .logo { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
-        .score { background: var(--surface-light); padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; }
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            margin-right: 5px;
+            flex-shrink: 0;
+        }
 
+        .logo { font-size: 1.1rem; font-weight: bold; color: var(--primary); flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .score { background: var(--surface-light); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; flex-shrink: 0; }
+
+        /* --- VIEWS --- */
         .view {
             flex: 1;
             display: none;
@@ -65,6 +80,7 @@
         }
         .view.active { display: flex; }
 
+        /* --- CARDS & INPUTS --- */
         .card {
             background: var(--surface-color);
             border-radius: var(--radius);
@@ -98,7 +114,7 @@
             text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
         }
 
-        input[readonly] { background: var(--surface-light); letter-spacing: 5px; }
+        input[readonly] { background: var(--surface-light); letter-spacing: 5px; cursor: pointer; }
 
         button {
             width: 100%;
@@ -116,6 +132,7 @@
         .btn-secondary { background: var(--surface-light); color: white; margin-top: auto; }
         .btn-small { font-size: 0.8rem; padding: 8px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); width: auto; align-self: center; }
 
+        /* --- GAME BOARD --- */
         .game-board {
             display: flex;
             justify-content: space-between;
@@ -156,7 +173,7 @@
         .card-back { background: var(--primary); color: white; transform: rotateY(180deg); border-color: var(--primary); }
 
         .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .word { font-size: 1.2rem; font-weight: bold; margin-top: 5px; word-break: break-word; }
+        .word { font-size: 1.2rem; font-weight: bold; margin-top:5px; word-break: break-word; }
         
         .ready-indicator {
             width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px;
@@ -165,7 +182,7 @@
         .game-card.ready .ready-indicator { background: var(--success); box-shadow: 0 0 8px var(--success); }
         .game-card.ready .card-front { border-color: var(--success); }
 
-        /* Chat & Notification */
+        /* --- CHAT --- */
         #fab-chat {
             position: fixed;
             bottom: 20px;
@@ -179,15 +196,14 @@
             font-size: 1.2rem;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            z-index: 20;
+            z-index: 25;
         }
 
-        /* Badge de notification */
         #chat-badge {
             position: absolute;
             top: -5px;
             right: -5px;
-            background: #ef4444; /* Rouge */
+            background: #ef4444; 
             color: white;
             font-size: 0.75rem;
             font-weight: bold;
@@ -199,10 +215,9 @@
             justify-content: center;
             padding: 0 4px;
             border: 2px solid var(--bg-color);
-            display: none; /* Caché par défaut */
+            display: none; 
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
 
         #chat-panel {
@@ -216,7 +231,7 @@
             display: flex;
             flex-direction: column;
             border-left: 2px solid var(--surface-light);
-            z-index: 10;
+            z-index: 20;
         }
         #chat-panel.open { right: 0; }
 
@@ -232,11 +247,73 @@
         .msg { padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; max-width: 80%; animation: popIn 0.2s; }
         .msg-me { align-self: flex-end; background: var(--primary); color: white; }
         .msg-friend { align-self: flex-start; background: var(--surface-light); color: white; }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
+        
         .chat-header { padding: 15px; background: #0f172a; display: flex; justify-content: space-between; }
         .close-btn { background: none; border: none; color: white; font-size: 1.5rem; width: auto; }
 
+        /* --- MENU (Side Nav) --- */
+        #side-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100%;
+            background: var(--surface-color);
+            transform: translateX(-100%); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 40; 
+            display: flex;
+            flex-direction: column;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+        }
+        #side-menu.open { transform: translateX(0); }
+
+        .menu-header {
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .menu-item a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-main);
+            text-decoration: none;
+            border-bottom: 1px solid var(--surface-light);
+            transition: background 0.2s;
+            font-size: 1rem;
+        }
+        .menu-item a:hover { background: var(--surface-light); }
+        .menu-item a.active { color: var(--primary); border-left: 4px solid var(--primary); background: rgba(139, 92, 246, 0.1); }
+
+        #menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 35;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #menu-overlay.show { display: block; opacity:1; }
+
+        /* --- TOAST --- */
         #toast {
             position: fixed;
             top: 20px;
@@ -261,8 +338,21 @@
 
     <div id="toast">Message</div>
 
+    <!-- MENU -->
+    <div id="side-menu">
+        <div class="menu-header">
+            <span>Arcade</span>
+            <button class="close-btn" onclick="toggleMenu()">×</button>
+        </div>
+        <ul class="menu-list" id="menu-list-container">
+            <!-- Le contenu sera chargé depuis menu.json -->
+        </ul>
+    </div>
+    <div id="menu-overlay" onclick="toggleMenu()"></div>
+
     <div id="app-container">
         <header>
+            <button class="menu-btn" onclick="toggleMenu()">☰</button>
             <div class="logo">MindSync</div>
             <div class="score">Score: <span id="score">0</span></div>
         </header>
@@ -271,10 +361,10 @@
         <div id="view-lobby" class="view active">
             <div class="card">
                 <h3>Ton Code</h3>
-                <p style="color: var(--text-muted); font-size: 0.8rem;">Donne ce code à 5 chiffres :</p>
-                <input type="text" id="my-id" readonly value="Chargement...">
+                <p style="color: var(--text-muted); font-size: 0.8rem;">Clique sur le code pour copier :</p>
+                <input type="text" id="my-id" readonly value="Initialisation..." onclick="this.select()">
                 
-                <button class="btn-small" onclick="initShortPeer()">Changer le code</button>
+                <button class="btn-small" onclick="forceNewCode()">Forcer nouveau code</button>
                 
                 <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
                 
@@ -289,7 +379,6 @@
             <div id="victory-text"></div>
 
             <div class="game-board">
-                <!-- Carte Moi -->
                 <div class="game-card" id="card-me">
                     <div class="card-inner">
                         <div class="card-front">
@@ -304,7 +393,6 @@
                     </div>
                 </div>
 
-                <!-- Carte Ami -->
                 <div class="game-card" id="card-friend">
                     <div class="card-inner">
                         <div class="card-front">
@@ -329,7 +417,7 @@
         </div>
     </div>
 
-    <!-- CHAT AVEC NOTIFICATION -->
+    <!-- CHAT -->
     <button id="fab-chat" onclick="toggleChat()">
         💬
         <div id="chat-badge">0</div>
@@ -347,6 +435,57 @@
     </div>
 
     <script>
+        // --- 1. GESTION DU MENU VIA FICHIER JSON ---
+        async function initMenu() {
+            const listContainer = document.getElementById('menu-list-container');
+            listContainer.innerHTML = '<li style="padding:15px; color:#666; text-align:center;">Chargement...</li>';
+
+            try {
+                // On va chercher le fichier menu.json
+                const response = await fetch('menu.json');
+                
+                if (!response.ok) throw new Error("Fichier non trouvé");
+                
+                const menuData = await response.json();
+                
+                // Une fois chargé, on vide le "Chargement..."
+                listContainer.innerHTML = '';
+
+                menuData.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'menu-item';
+                    
+                    const a = document.createElement('a');
+                    a.href = item.url;
+                    a.innerText = item.title;
+                    if (item.active) a.classList.add('active');
+                    
+                    li.appendChild(a);
+                    listContainer.appendChild(li);
+                });
+
+            } catch (error) {
+                console.error("Erreur de chargement du menu:", error);
+                listContainer.innerHTML = '<li style="padding:15px; color:red; text-align:center;">Erreur: menu.json introuvable</li>';
+            }
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('side-menu');
+            const overlay = document.getElementById('menu-overlay');
+            if (menu.classList.contains('open')) {
+                menu.classList.remove('open');
+                overlay.classList.remove('show');
+            } else {
+                menu.classList.add('open');
+                overlay.classList.add('show');
+            }
+        }
+
+        // Lancer le menu au démarrage
+        initMenu();
+
+        // --- 2. LOGIQUE JEU (PeerJS) ---
         let peer;
         let conn = null;
         let myWord = "";
@@ -355,11 +494,9 @@
         let readyMe = false;
         let readyFriend = false;
         
-        // Variables pour notifications
         let isChatOpen = false;
         let unreadCount = 0;
 
-        // Sélecteurs DOM
         const els = {
             lobby: document.getElementById('view-lobby'),
             game: document.getElementById('view-game'),
@@ -378,33 +515,24 @@
             badge: document.getElementById('chat-badge')
         };
 
-        // --- SON DE NOTIFICATION (Web Audio API) ---
+        // Audio
         function playNotificationSound() {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
-                
                 const ctx = new AudioContext();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-
                 osc.connect(gain);
                 gain.connect(ctx.destination);
-
                 osc.type = 'sine';
-                // Son "Ding" montant
                 osc.frequency.setValueAtTime(500, ctx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.1);
-                
-                // Volume qui baisse
                 gain.gain.setValueAtTime(0.1, ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-
                 osc.start();
                 osc.stop(ctx.currentTime + 0.15);
-            } catch (e) {
-                console.error("Audio error", e);
-            }
+            } catch (e) { console.error("Audio error", e); }
         }
 
         function updateBadge() {
@@ -416,10 +544,14 @@
             }
         }
 
-        // --- LOGIQUE ID COURT (5 CHIFFRES) ---
+        function forceNewCode() {
+            initShortPeer();
+        }
+
         function initShortPeer() {
             if (peer && !peer.destroyed) {
                 peer.destroy();
+                peer = null;
             }
             els.myId.value = "Génération...";
             els.myId.classList.remove('loaded');
@@ -428,24 +560,17 @@
             
             try {
                 peer = new Peer(shortId);
-
                 peer.on('open', (id) => {
                     els.myId.value = id;
                     els.myId.classList.add('loaded');
-                    showToast("Code prêt : " + id);
+                    showToast("Code généré : " + id);
                 });
-
                 peer.on('error', (err) => {
                     console.error(err);
-                    if (err.type === 'unavailable-id') {
-                        initShortPeer();
-                    } else if (err.type === 'peer-unavailable') {
-                        alert("L'ami n'est pas en ligne ou code faux");
-                    } else {
-                        els.myId.value = "Erreur";
-                    }
+                    if (err.type === 'unavailable-id') initShortPeer();
+                    else if (err.type === 'peer-unavailable') alert("Ami hors ligne");
+                    else els.myId.value = "Erreur";
                 });
-                
                 peer.on('connection', (c) => {
                     conn = c;
                     setupConn();
@@ -453,28 +578,18 @@
                 });
             } catch(e) {
                 console.log("Erreur init peer", e);
+                setTimeout(initShortPeer, 2000);
             }
         }
-
         initShortPeer();
-
-        // --- LOGIQUE JEU ---
 
         function connect() {
             const id = els.friendId.value.trim();
             if(!id) return alert("Entre un code");
-            
-            if(!peer || peer.destroyed) {
-                alert("Erreur connexion. Relance la page.");
-                return;
-            }
-
+            if(!peer || peer.destroyed) { alert("Erreur connexion."); return; }
             conn = peer.connect(id);
-            conn.on('open', () => {
-                setupConn();
-                goToGame();
-            });
-            conn.on('error', () => alert("Impossible de se connecter. Vérifie le code."));
+            conn.on('open', () => { setupConn(); goToGame(); });
+            conn.on('error', () => alert("Connexion échouée."));
         }
 
         function setupConn() {
@@ -486,7 +601,6 @@
                     document.getElementById('friend-word-front').innerText = "PRÊT";
                     checkReady();
                 } else if (data.type === 'CHAT') {
-                    // Gestion des notifications
                     if (!isChatOpen) {
                         unreadCount++;
                         updateBadge();
@@ -516,21 +630,17 @@
             els.meCard.classList.add('ready');
             els.gameInput.disabled = true;
             els.btnReady.style.display = 'none';
-            
             conn.send({ type: 'WORD', val: myWord });
             checkReady();
         }
 
         function checkReady() {
-            if (readyMe && readyFriend) {
-                setTimeout(revealCards, 500);
-            }
+            if (readyMe && readyFriend) setTimeout(revealCards, 500);
         }
 
         function revealCards() {
             document.getElementById('me-word-back').innerText = myWord;
             document.getElementById('friend-word-back').innerText = friendWord;
-
             document.querySelector('#card-me .card-inner').classList.add('flipped');
             document.querySelector('#card-friend .card-inner').classList.add('flipped');
 
@@ -545,7 +655,6 @@
                 els.victory.className = "";
                 els.btnNext.innerText = "Continuer";
             }
-            
             els.btnNext.style.display = 'block';
         }
 
@@ -554,26 +663,21 @@
             readyFriend = false;
             myWord = "";
             friendWord = "";
-
             document.querySelector('#card-me .card-inner').classList.remove('flipped');
             document.querySelector('#card-friend .card-inner').classList.remove('flipped');
             
             setTimeout(() => {
                 document.getElementById('me-word-front').innerText = "?";
                 document.getElementById('friend-word-front').innerText = "?";
-                
                 els.gameInput.value = "";
                 els.gameInput.disabled = false;
                 els.btnReady.style.display = 'block';
                 els.btnReady.disabled = true;
-                
                 els.btnNext.style.display = 'none';
-                
                 els.meCard.classList.remove('ready');
                 els.friendCard.classList.remove('ready');
                 els.victory.style.display = 'none';
                 els.victory.className = "";
-                
                 els.gameInput.focus();
             }, 300);
         }
@@ -581,12 +685,7 @@
         function toggleChat() { 
             isChatOpen = !isChatOpen;
             els.chatPanel.classList.toggle('open'); 
-            
-            if (isChatOpen) {
-                // Si on ouvre le chat, on marque comme lu
-                unreadCount = 0;
-                updateBadge();
-            }
+            if (isChatOpen) { unreadCount = 0; updateBadge(); }
         }
         
         function sendChat() {
