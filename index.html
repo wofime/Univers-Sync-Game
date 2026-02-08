@@ -7,6 +7,7 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     
     <style>
+        /* --- STYLE --- */
         :root {
             --bg-color: #0f172a;
             --surface-color: #1e293b;
@@ -103,7 +104,6 @@
         .card-back { background: var(--primary); color: white; transform: rotateY(180deg); border-color: var(--primary); }
         .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
         .word { font-size: 1.2rem; font-weight: bold; margin-top: 5px; word-break: break-word; }
-        
         .ready-indicator { width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px; transition: 0.3s; }
         .game-card.ready .ready-indicator { background: var(--success); box-shadow: 0 0 8px var(--success); }
         .game-card.ready .card-front { border-color: var(--success); }
@@ -114,7 +114,6 @@
             border-radius: 50%; background: var(--secondary); color: white; border: none; font-size: 1.2rem;
             cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 25;
         }
-
         #chat-badge {
             position: absolute; top: -5px; right: -5px; background: #ef4444; color: white;
             font-size: 0.75rem; font-weight: bold; height: 20px; min-width: 20px; border-radius: 10px;
@@ -122,7 +121,6 @@
             display: none; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-
         #chat-panel {
             position: fixed; top: 0; right: -300px; width: 300px; height: 100%;
             background: var(--surface-color); transition: 0.3s; display: flex; flex-direction: column;
@@ -144,10 +142,7 @@
             display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.5);
         }
         #side-menu.open { transform: translateX(0); }
-        .menu-header {
-            padding: 20px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .menu-header { padding: 20px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; }
         .menu-list { list-style: none; padding: 0; margin: 0; flex: 1; overflow-y: auto; }
         .menu-item a {
             display: block; padding: 15px 20px; color: var(--text-main); text-decoration: none;
@@ -155,7 +150,6 @@
         }
         .menu-item a:hover { background: var(--surface-light); }
         .menu-item a.active { color: var(--primary); border-left: 4px solid var(--primary); background: rgba(139, 92, 246, 0.1); }
-
         #menu-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 35; display: none; opacity: 0; transition: opacity 0.3s;
@@ -178,7 +172,7 @@
 <body>
 
     <!-- ÉLÉMENT AUDIO CACHÉ POUR LA MUSIQUE FICHIER -->
-    <!-- Si bgm.mp3 existe, il sera chargé automatiquement ici -->
+    <!-- Charge bgm.m4a maintenant -->
     <audio id="bgm-element" loop></audio>
 
     <div id="toast">Message</div>
@@ -280,7 +274,7 @@
     </div>
 
     <script>
-        // --- 1. SYSTÈME AUDIO COMPLET ---
+        // --- 1. SYSTÈME AUDIO COMPLET (M4A support) ---
         const AudioEngine = {
             ctx: null,
             bgmElement: document.getElementById('bgm-element'),
@@ -296,15 +290,14 @@
                 if (this.ctx.state === 'suspended') {
                     this.ctx.resume();
                 }
-                // Charger les préférences volume depuis le localStorage
+                // Charger les préférences volume
                 this.sfxVolume = parseFloat(localStorage.getItem('sfxVolume')) || 1.0;
                 this.bgmVolume = parseFloat(localStorage.getItem('musicVolume')) || 1.0;
                 
-                // Appliquer le volume à l'élément fichier
+                // Appliquer le volume à l'élément
                 this.bgmElement.volume = this.bgmVolume;
             },
 
-            // Jouer un ton (SFX) avec volume
             playTone: function(freq, type, duration, volMultiplier = 1) {
                 if (this.sfxVolume <= 0 || !this.isInitialized) return;
                 const osc = this.ctx.createOscillator();
@@ -314,7 +307,7 @@
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
                 
-                // Volume Master SFX
+                // Volume Master SFX (applique le volume du slider)
                 gain.gain.setValueAtTime(0.1 * this.sfxVolume * volMultiplier, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
                 
@@ -322,40 +315,37 @@
                 osc.stop(this.ctx.currentTime + duration);
             },
 
-            // Effets Jeu (Plus audibles)
+            // Effets Jeu
             playFlip: function() { 
-                // "Swish"
-                this.playTone(400, 'triangle', 0.2, 1.5); 
-                this.playTone(600, 'sine', 0.2, 1.5); 
+                this.playTone(400, 'sine', 0.2, 1.5); 
+                this.playTone(600, 'triangle', 0.2, 1.5); 
             },
             playWin: function() { 
-                this.playTone(523.25, 'sine', 0.6, 1.5); // C5
-                setTimeout(() => this.playTone(659.25, 'sine', 0.6, 1.5), 100); // E5
-                setTimeout(() => this.playTone(783.99, 'sine', 0.8, 1.5), 200); // G5
+                this.playTone(523.25, 'sine', 0.6, 1.5);
+                setTimeout(() => this.playTone(659.25, 'sine', 0.6, 1.5), 100);
+                setTimeout(() => this.playTone(783.99, 'sine', 0.8, 1.5), 200);
             },
             playLose: function() { 
-                this.playTone(150, 'sawtooth', 0.6, 2.0);
+                this.playTone(200, 'sawtooth', 0.6, 2.0);
             },
             playChat: function() {
-                // "Bip" net et plus haut
                 this.playTone(800, 'square', 0.1, 0.8);
             },
 
-            // Musique (Fichier bgm.mp3)
+            // Musique de fond (Fichier M4A)
             startMusic: function() {
                 if (this.bgmVolume <= 0) return;
                 
-                // Tenter de charger le fichier
-                this.bgmElement.src = 'bgm.mp3';
+                // Chargement du fichier M4A
+                this.bgmElement.src = 'bgm.m4a';
                 this.bgmElement.volume = this.bgmVolume;
                 
                 // Gestion d'erreur si fichier pas là
                 this.bgmElement.onerror = () => {
-                    console.log("Fichier bgm.mp3 introuvable. Musique désactivée.");
+                    console.log("Fichier bgm.m4a introuvable. Musique désactivée.");
                     this.stopMusic();
                 };
 
-                // Lancer la lecture
                 const playPromise = this.bgmElement.play();
                 if (playPromise !== undefined) {
                     playPromise.then(_ => {
@@ -455,6 +445,9 @@
         // --- 3. VARIABLES JEU ---
         let peer, conn = null, myWord = "", friendWord = "", score = 0, readyMe = false, readyFriend = false;
         let isChatOpen = false, unreadCount = 0;
+        
+        // Audio vars loaded from settings
+        // Note: Le code settings gère le localStorage, AudioEngine le lit ici.
 
         const els = {
             lobby: document.getElementById('view-lobby'),
@@ -524,7 +517,7 @@
                     if (!isChatOpen) {
                         unreadCount++;
                         updateBadge();
-                        AudioEngine.playChat(); // Son notif chat
+                        AudioEngine.playChat();
                     }
                     addMsg(data.val, 'friend');
                 }
@@ -636,7 +629,7 @@
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        // --- Écouteur d'événements pour le volume en temps réel ---
+        // --- Écouteur d'événements storage ---
         window.addEventListener('storage', (e) => {
             if (e.key === 'sfxVolume') AudioEngine.updateSfxVolume(e.newValue);
             if (e.key === 'musicVolume') AudioEngine.updateMusicVolume(e.newValue);
