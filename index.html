@@ -45,7 +45,7 @@
 
         /* --- HEADER --- */
         header {
-            padding: 15px 15px 15px 10px;
+            padding: 15px 20px; /* Padding équilibré */
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -63,11 +63,20 @@
             font-size: 1.5rem;
             cursor: pointer;
             padding: 0;
-            margin-right: 5px;
+            margin: 0; /* Collé à gauche */
             flex-shrink: 0;
         }
 
-        .logo { font-size: 1.1rem; font-weight: bold; color: var(--primary); flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .logo { 
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+            flex-grow: 1; 
+            text-align: center; /* Centré */
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
         .score { background: var(--surface-light); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; flex-shrink: 0; }
 
         /* --- VIEWS --- */
@@ -79,6 +88,43 @@
             overflow-y: hidden;
         }
         .view.active { display: flex; }
+
+        /* --- PARAMÈTRES (Toggle Switch) --- */
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            font-size: 1.1rem;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--surface-light);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(24px); }
 
         /* --- CARDS & INPUTS --- */
         .card {
@@ -251,7 +297,7 @@
         .chat-header { padding: 15px; background: #0f172a; display: flex; justify-content: space-between; }
         .close-btn { background: none; border: none; color: white; font-size: 1.5rem; width: auto; }
 
-        /* --- MENU (Side Nav) --- */
+        /* --- MENU LATÉRAL --- */
         #side-menu {
             position: fixed;
             top: 0;
@@ -344,16 +390,18 @@
             <span>Arcade</span>
             <button class="close-btn" onclick="toggleMenu()">×</button>
         </div>
-        <ul class="menu-list" id="menu-list-container">
-            <!-- Le contenu sera chargé depuis menu.json -->
-        </ul>
+        <ul class="menu-list" id="menu-list-container"></ul>
     </div>
     <div id="menu-overlay" onclick="toggleMenu()"></div>
 
     <div id="app-container">
         <header>
+            <!-- Bouton Menu collé à gauche -->
             <button class="menu-btn" onclick="toggleMenu()">☰</button>
+            
+            <!-- MindSync centré -->
             <div class="logo">MindSync</div>
+            
             <div class="score">Score: <span id="score">0</span></div>
         </header>
 
@@ -415,6 +463,22 @@
 
             <button id="btn-next" class="btn-secondary" onclick="resetRound()" style="display:none;">Continuer</button>
         </div>
+
+        <!-- ÉCRAN 3 : PARAMÈTRES -->
+        <div id="view-settings" class="view">
+            <div class="card">
+                <h3>Paramètres</h3>
+                
+                <div class="setting-row">
+                    <span>Sons</span>
+                    <label class="switch">
+                        <input type="checkbox" id="sound-toggle" onchange="toggleSound()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <button class="btn-secondary" onclick="goToLobby()">Retour</button>
+        </div>
     </div>
 
     <!-- CHAT -->
@@ -435,38 +499,55 @@
     </div>
 
     <script>
-        // --- 1. GESTION DU MENU VIA FICHIER JSON ---
+        // --- 1. GESTION VUES ---
+        function showView(viewId) {
+            // Cacher toutes les vues
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            // Afficher la vue demandée
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        function goToLobby() {
+            // Si on est en jeu, on reset ?
+            if(conn) alert("Attention: Quitter le jeu coupera la connexion.");
+            showView('view-lobby');
+        }
+
+        // --- 2. GESTION DU MENU (JSON) ---
         async function initMenu() {
             const listContainer = document.getElementById('menu-list-container');
             listContainer.innerHTML = '<li style="padding:15px; color:#666; text-align:center;">Chargement...</li>';
-
             try {
-                // On va chercher le fichier menu.json
                 const response = await fetch('menu.json');
-                
                 if (!response.ok) throw new Error("Fichier non trouvé");
-                
                 const menuData = await response.json();
-                
-                // Une fois chargé, on vide le "Chargement..."
                 listContainer.innerHTML = '';
 
                 menuData.forEach(item => {
                     const li = document.createElement('li');
                     li.className = 'menu-item';
-                    
                     const a = document.createElement('a');
                     a.href = item.url;
                     a.innerText = item.title;
                     if (item.active) a.classList.add('active');
-                    
+
+                    // Gestion navigation interne (#settings, #game)
+                    a.addEventListener('click', (e) => {
+                        if(item.url.startsWith('#')) {
+                            e.preventDefault();
+                            const targetId = item.url.substring(1);
+                            // Mapping manuel car IDs sont différents
+                            if(targetId === 'game') showView('view-game');
+                            if(targetId === 'settings') showView('view-settings');
+                            toggleMenu();
+                        }
+                    });
+
                     li.appendChild(a);
                     listContainer.appendChild(li);
                 });
-
             } catch (error) {
-                console.error("Erreur de chargement du menu:", error);
-                listContainer.innerHTML = '<li style="padding:15px; color:red; text-align:center;">Erreur: menu.json introuvable</li>';
+                listContainer.innerHTML = '<li style="padding:15px; color:red; text-align:center;">Erreur menu</li>';
             }
         }
 
@@ -481,11 +562,21 @@
                 overlay.classList.add('show');
             }
         }
-
-        // Lancer le menu au démarrage
         initMenu();
 
-        // --- 2. LOGIQUE JEU (PeerJS) ---
+        // --- 3. GESTION PARAMÈTRES ---
+        let soundEnabled = localStorage.getItem('soundEnabled') !== 'false'; // Par défaut true
+        
+        // Mettre à jour le toggle au chargement
+        document.getElementById('sound-toggle').checked = soundEnabled;
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('soundEnabled', soundEnabled);
+            showToast("Sons " + (soundEnabled ? "activés" : "désactivés"));
+        }
+
+        // --- 4. LOGIQUE JEU (PeerJS) ---
         let peer;
         let conn = null;
         let myWord = "";
@@ -493,13 +584,10 @@
         let score = 0;
         let readyMe = false;
         let readyFriend = false;
-        
         let isChatOpen = false;
         let unreadCount = 0;
 
         const els = {
-            lobby: document.getElementById('view-lobby'),
-            game: document.getElementById('view-game'),
             myId: document.getElementById('my-id'),
             friendId: document.getElementById('friend-id'),
             gameInput: document.getElementById('game-input'),
@@ -515,8 +603,8 @@
             badge: document.getElementById('chat-badge')
         };
 
-        // Audio
         function playNotificationSound() {
+            if(!soundEnabled) return;
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
@@ -532,7 +620,7 @@
                 gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
                 osc.start();
                 osc.stop(ctx.currentTime + 0.15);
-            } catch (e) { console.error("Audio error", e); }
+            } catch (e) { console.error(e); }
         }
 
         function updateBadge() {
@@ -544,20 +632,13 @@
             }
         }
 
-        function forceNewCode() {
-            initShortPeer();
-        }
+        function forceNewCode() { initShortPeer(); }
 
         function initShortPeer() {
-            if (peer && !peer.destroyed) {
-                peer.destroy();
-                peer = null;
-            }
+            if (peer && !peer.destroyed) { peer.destroy(); peer = null; }
             els.myId.value = "Génération...";
             els.myId.classList.remove('loaded');
-
             const shortId = Math.floor(10000 + Math.random() * 90000).toString();
-            
             try {
                 peer = new Peer(shortId);
                 peer.on('open', (id) => {
@@ -566,7 +647,6 @@
                     showToast("Code généré : " + id);
                 });
                 peer.on('error', (err) => {
-                    console.error(err);
                     if (err.type === 'unavailable-id') initShortPeer();
                     else if (err.type === 'peer-unavailable') alert("Ami hors ligne");
                     else els.myId.value = "Erreur";
@@ -574,21 +654,18 @@
                 peer.on('connection', (c) => {
                     conn = c;
                     setupConn();
-                    goToGame();
+                    showView('view-game');
                 });
-            } catch(e) {
-                console.log("Erreur init peer", e);
-                setTimeout(initShortPeer, 2000);
-            }
+            } catch(e) { setTimeout(initShortPeer, 2000); }
         }
         initShortPeer();
 
         function connect() {
             const id = els.friendId.value.trim();
             if(!id) return alert("Entre un code");
-            if(!peer || peer.destroyed) { alert("Erreur connexion."); return; }
+            if(!peer || peer.destroyed) return alert("Erreur connexion.");
             conn = peer.connect(id);
-            conn.on('open', () => { setupConn(); goToGame(); });
+            conn.on('open', () => { setupConn(); showView('view-game'); });
             conn.on('error', () => alert("Connexion échouée."));
         }
 
@@ -610,12 +687,6 @@
                 }
             });
             conn.on('close', () => alert("Déconnecté"));
-        }
-
-        function goToGame() {
-            els.lobby.classList.remove('active');
-            els.game.classList.add('active');
-            showToast("Connecté !");
         }
 
         function updateInput() {
@@ -659,10 +730,7 @@
         }
 
         function resetRound() {
-            readyMe = false;
-            readyFriend = false;
-            myWord = "";
-            friendWord = "";
+            readyMe = false; readyFriend = false; myWord = ""; friendWord = "";
             document.querySelector('#card-me .card-inner').classList.remove('flipped');
             document.querySelector('#card-friend .card-inner').classList.remove('flipped');
             
