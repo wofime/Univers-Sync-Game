@@ -1,6 +1,4 @@
 [
   { "title": "🧠 MindSync", "url": "index.html", "active": false },
-  { "title": "❌ Tic Tac Toe", "url": "tictactoe.html", "active": false },
-  { "title": "📝 Le Pendu", "url": "pendu.html", "active": false },
   { "title": "⚙️ Paramètres", "url": "settings.html", "active": true }
 ]
