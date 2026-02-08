@@ -7,7 +7,6 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     
     <style>
-        /* --- STYLE --- */
         :root {
             --bg-color: #0f172a;
             --surface-color: #1e293b;
@@ -57,85 +56,33 @@
             position: relative;
         }
 
-        .menu-btn {
-            background: none;
-            border: none;
-            color: var(--text-main);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0;
-            margin: 0;
-            flex-shrink: 0;
-        }
-
-        .logo { 
-            font-size: 1.1rem; 
-            font-weight: bold; 
-            color: var(--primary); 
-            flex-grow: 1; 
-            text-align: center;
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-        }
+        .menu-btn { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; padding: 0; margin: 0; flex-shrink: 0; }
+        .logo { font-size: 1.1rem; font-weight: bold; color: var(--primary); flex-grow: 1; text-align: center; }
         .score { background: var(--surface-light); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; flex-shrink: 0; }
 
         /* --- VIEWS --- */
-        .view {
-            flex: 1;
-            display: none;
-            flex-direction: column;
-            padding: 20px;
-            overflow-y: hidden;
-        }
+        .view { flex: 1; display: none; flex-direction: column; padding: 20px; overflow-y: hidden; }
         .view.active { display: flex; }
 
         /* --- CARDS & INPUTS --- */
         .card {
-            background: var(--surface-color);
-            border-radius: var(--radius);
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 20px;
-            border: 1px solid var(--surface-light);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            flex-shrink: 0;
+            background: var(--surface-color); border-radius: var(--radius); padding: 20px; text-align: center;
+            margin-bottom: 20px; border: 1px solid var(--surface-light); box-shadow: 0 4px 6px rgba(0,0,0,0.3); flex-shrink: 0;
         }
 
         input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 15px; 
-            border-radius: 8px;
-            border: 1px solid var(--surface-light);
-            background: #020617;
-            color: white;
-            font-size: 1.5rem; 
-            margin-bottom: 10px;
-            outline: none;
-            letter-spacing: 2px;
-            font-weight: bold;
-            text-align: center;
+            width: 100%; padding: 15px; border-radius: 8px; border: 1px solid var(--surface-light);
+            background: #020617; color: white; font-size: 1.5rem; margin-bottom: 10px;
+            outline: none; letter-spacing: 2px; font-weight: bold; text-align: center;
         }
         input[type="text"]:focus, input[type="number"]:focus { border-color: var(--primary); }
         
-        #my-id.loaded {
-            border-color: var(--success);
-            color: var(--success);
-            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-        }
-
+        #my-id.loaded { border-color: var(--success); color: var(--success); text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
         input[readonly] { background: var(--surface-light); letter-spacing: 5px; cursor: pointer; }
 
         button {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-            flex-shrink: 0;
-            margin-bottom: 10px;
+            width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold;
+            cursor: pointer; transition: 0.2s; flex-shrink: 0; margin-bottom: 10px;
         }
         .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
         .btn-primary:disabled { background: var(--surface-light); opacity: 0.5; cursor: not-allowed; box-shadow: none; }
@@ -143,148 +90,82 @@
         .btn-small { font-size: 0.8rem; padding: 8px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); width: auto; align-self: center; }
 
         /* --- GAME BOARD --- */
-        .game-board {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0 20px 0;
-            flex-shrink: 0;
-        }
-
-        .game-card {
-            width: 48%;
-            aspect-ratio: 3/4;
-            perspective: 1000px;
-        }
-
-        .card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
+        .game-board { display: flex; justify-content: space-between; margin: 10px 0 20px 0; flex-shrink: 0; }
+        .game-card { width: 48%; aspect-ratio: 3/4; perspective: 1000px; }
+        .card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; }
         .card-inner.flipped { transform: rotateY(180deg); }
-
         .card-front, .card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-radius: 12px;
-            border: 2px solid var(--surface-light);
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border-radius: 12px; border: 2px solid var(--surface-light);
         }
-
         .card-front { background: var(--surface-color); }
         .card-back { background: var(--primary); color: white; transform: rotateY(180deg); border-color: var(--primary); }
-
         .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        .word { font-size: 1.2rem; font-weight: bold; margin-top:5px; word-break: break-word; }
+        .word { font-size: 1.2rem; font-weight: bold; margin-top: 5px; word-break: break-word; }
         
-        .ready-indicator {
-            width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px;
-            transition: 0.3s;
-        }
+        .ready-indicator { width: 10px; height: 10px; background: var(--text-muted); border-radius: 50%; margin-top: 10px; transition: 0.3s; }
         .game-card.ready .ready-indicator { background: var(--success); box-shadow: 0 0 8px var(--success); }
         .game-card.ready .card-front { border-color: var(--success); }
 
         /* --- CHAT --- */
         #fab-chat {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: var(--secondary);
-            color: white;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            z-index: 25;
+            position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px;
+            border-radius: 50%; background: var(--secondary); color: white; border: none; font-size: 1.2rem;
+            cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 25;
         }
 
         #chat-badge {
-            position: absolute;
-            top: -5px; right: -5px;
-            background: #ef4444; color: white;
-            font-size: 0.75rem; font-weight: bold;
-            height: 20px; min-width: 20px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            padding: 0 4px; border: 2px solid var(--bg-color);
+            position: absolute; top: -5px; right: -5px; background: #ef4444; color: white;
+            font-size: 0.75rem; font-weight: bold; height: 20px; min-width: 20px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid var(--bg-color);
             display: none; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
 
         #chat-panel {
-            position: fixed; top: 0; right: -300px;
-            width: 300px; height: 100%;
-            background: var(--surface-color);
-            transition: 0.3s;
-            display: flex; flex-direction: column;
-            border-left: 2px solid var(--surface-light);
-            z-index: 20;
+            position: fixed; top: 0; right: -300px; width: 300px; height: 100%;
+            background: var(--surface-color); transition: 0.3s; display: flex; flex-direction: column;
+            border-left: 2px solid var(--surface-light); z-index: 20;
         }
         #chat-panel.open { right: 0; }
-
-        #chat-messages {
-            flex: 1; padding: 15px; overflow-y: auto;
-            display: flex; flex-direction: column; gap: 8px;
-        }
-
+        #chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
         .msg { padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; max-width: 80%; animation: popIn 0.2s; }
         .msg-me { align-self: flex-end; background: var(--primary); color: white; }
         .msg-friend { align-self: flex-start; background: var(--surface-light); color: white; }
-        
         .chat-header { padding: 15px; background: #0f172a; display: flex; justify-content: space-between; }
         .close-btn { background: none; border: none; color: white; font-size: 1.5rem; width: auto; }
 
         /* --- MENU LATÉRAL --- */
         #side-menu {
             position: fixed; top: 0; left: 0; width: 280px; height: 100%;
-            background: var(--surface-color);
-            transform: translateX(-100%); 
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 40; 
-            display: flex; flex-direction: column;
-            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+            background: var(--surface-color); transform: translateX(-100%); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 40; 
+            display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.5);
         }
         #side-menu.open { transform: translateX(0); }
-
         .menu-header {
-            padding: 20px; background: var(--primary); color: white;
-            font-weight: bold; font-size: 1.2rem;
+            padding: 20px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem;
             display: flex; justify-content: space-between; align-items: center;
         }
-
         .menu-list { list-style: none; padding: 0; margin: 0; flex: 1; overflow-y: auto; }
-
         .menu-item a {
-            display: block; padding: 15px 20px; color: var(--text-main);
-            text-decoration: none; border-bottom: 1px solid var(--surface-light);
-            transition: background 0.2s; font-size: 1rem;
+            display: block; padding: 15px 20px; color: var(--text-main); text-decoration: none;
+            border-bottom: 1px solid var(--surface-light); transition: background 0.2s; font-size: 1rem;
         }
         .menu-item a:hover { background: var(--surface-light); }
         .menu-item a.active { color: var(--primary); border-left: 4px solid var(--primary); background: rgba(139, 92, 246, 0.1); }
 
         #menu-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 35;
-            display: none; opacity: 0; transition: opacity 0.3s;
+            background: rgba(0,0,0,0.5); z-index: 35; display: none; opacity: 0; transition: opacity 0.3s;
         }
         #menu-overlay.show { display: block; opacity:1; }
 
         /* --- TOAST --- */
         #toast {
-            position: fixed; top: 20px; left: 50%;
-            transform: translateX(-50%);
-            background: var(--surface-light);
-            padding: 10px 20px; border-radius: 20px;
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--surface-light); padding: 10px 20px; border-radius: 20px;
             opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 100;
         }
         #toast.show { opacity: 1; }
@@ -295,6 +176,10 @@
     </style>
 </head>
 <body>
+
+    <!-- ÉLÉMENT AUDIO CACHÉ POUR LA MUSIQUE FICHIER -->
+    <!-- Si bgm.mp3 existe, il sera chargé automatiquement ici -->
+    <audio id="bgm-element" loop></audio>
 
     <div id="toast">Message</div>
 
@@ -337,6 +222,7 @@
             <div id="victory-text"></div>
 
             <div class="game-board">
+                <!-- Carte Moi -->
                 <div class="game-card" id="card-me">
                     <div class="card-inner">
                         <div class="card-front">
@@ -351,6 +237,7 @@
                     </div>
                 </div>
 
+                <!-- Carte Ami -->
                 <div class="game-card" id="card-friend">
                     <div class="card-inner">
                         <div class="card-front">
@@ -393,15 +280,12 @@
     </div>
 
     <script>
-        // --- 1. SYSTÈME AUDIO (Web Audio API) ---
+        // --- 1. SYSTÈME AUDIO COMPLET ---
         const AudioEngine = {
             ctx: null,
-            bgmOsc: null,
-            bgmGain: null,
-            bgmInterval: null,
-            noteIndex: 0,
-            // Gamme simple Cm pentatonique pour la BGM
-            bgmNotes: [130.81, 155.56, 174.61, 196.00, 233.08], // C3, Eb3, F3, G3, Bb3
+            bgmElement: document.getElementById('bgm-element'),
+            bgmVolume: 0.5,
+            sfxVolume: 1.0,
             isInitialized: false,
 
             init: function() {
@@ -412,91 +296,98 @@
                 if (this.ctx.state === 'suspended') {
                     this.ctx.resume();
                 }
+                // Charger les préférences volume depuis le localStorage
+                this.sfxVolume = parseFloat(localStorage.getItem('sfxVolume')) || 1.0;
+                this.bgmVolume = parseFloat(localStorage.getItem('musicVolume')) || 1.0;
+                
+                // Appliquer le volume à l'élément fichier
+                this.bgmElement.volume = this.bgmVolume;
             },
 
-            playTone: function(freq, type, duration, vol = 0.1) {
-                if (!soundEnabled || !this.isInitialized) return;
+            // Jouer un ton (SFX) avec volume
+            playTone: function(freq, type, duration, volMultiplier = 1) {
+                if (this.sfxVolume <= 0 || !this.isInitialized) return;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                
+                // Volume Master SFX
+                gain.gain.setValueAtTime(0.1 * this.sfxVolume * volMultiplier, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                
                 osc.start();
                 osc.stop(this.ctx.currentTime + duration);
             },
 
-            // Effets de Jeu
-            playFlip: function() { this.playTone(400, 'sine', 0.2, 0.1); this.playTone(600, 'triangle', 0.2, 0.1); }, // "Shoosh"
+            // Effets Jeu (Plus audibles)
+            playFlip: function() { 
+                // "Swish"
+                this.playTone(400, 'triangle', 0.2, 1.5); 
+                this.playTone(600, 'sine', 0.2, 1.5); 
+            },
             playWin: function() { 
-                // Petit accord C Major
-                this.playTone(523.25, 'sine', 0.5, 0.1); // C5
-                setTimeout(() => this.playTone(659.25, 'sine', 0.5, 0.1), 100); // E5
-                setTimeout(() => this.playTone(783.99, 'sine', 0.8, 0.1), 200); // G5
+                this.playTone(523.25, 'sine', 0.6, 1.5); // C5
+                setTimeout(() => this.playTone(659.25, 'sine', 0.6, 1.5), 100); // E5
+                setTimeout(() => this.playTone(783.99, 'sine', 0.8, 1.5), 200); // G5
             },
             playLose: function() { 
-                // Son grave descendant
-                this.playTone(200, 'sawtooth', 0.6, 0.15);
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.5);
-                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.5);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.5);
+                this.playTone(150, 'sawtooth', 0.6, 2.0);
             },
             playChat: function() {
-                this.playTone(800, 'sine', 0.1, 0.05); // Petit "bip" discret
+                // "Bip" net et plus haut
+                this.playTone(800, 'square', 0.1, 0.8);
             },
 
-            // Musique de fond
+            // Musique (Fichier bgm.mp3)
             startMusic: function() {
-                if (!musicEnabled || !this.isInitialized) return;
-                if (this.bgmInterval) return;
-
-                const playNote = () => {
-                    if (!musicEnabled) return;
-                    const freq = this.bgmNotes[this.noteIndex % this.bgmNotes.length];
-                    
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    
-                    osc.type = 'triangle';
-                    osc.frequency.value = freq;
-                    
-                    // Enveloppe longue style "pad"
-                    gain.gain.setValueAtTime(0, this.ctx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.02, this.ctx.currentTime + 0.1);
-                    gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 1.8);
-
-                    osc.start();
-                    osc.stop(this.ctx.currentTime + 2);
-                    
-                    this.noteIndex++;
+                if (this.bgmVolume <= 0) return;
+                
+                // Tenter de charger le fichier
+                this.bgmElement.src = 'bgm.mp3';
+                this.bgmElement.volume = this.bgmVolume;
+                
+                // Gestion d'erreur si fichier pas là
+                this.bgmElement.onerror = () => {
+                    console.log("Fichier bgm.mp3 introuvable. Musique désactivée.");
+                    this.stopMusic();
                 };
 
-                playNote(); // Première note
-                this.bgmInterval = setInterval(playNote, 2000); // Une note toutes les 2 secondes
-            },
-
-            stopMusic: function() {
-                if (this.bgmInterval) {
-                    clearInterval(this.bgmInterval);
-                    this.bgmInterval = null;
+                // Lancer la lecture
+                const playPromise = this.bgmElement.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        // Lecture démarrée
+                    }).catch(error => {
+                        console.error("Erreur lecture BGM:", error);
+                    });
                 }
             },
 
+            stopMusic: function() {
+                this.bgmElement.pause();
+                this.bgmElement.currentTime = 0;
+            },
+
+            // Mise à jour volume depuis les paramètres
+            updateMusicVolume: function(val) {
+                this.bgmVolume = parseFloat(val);
+                this.bgmElement.volume = this.bgmVolume;
+                if (this.bgmVolume > 0 && document.getElementById('view-game').classList.contains('active')) {
+                    this.startMusic();
+                } else {
+                    this.stopMusic();
+                }
+            },
+            
+            updateSfxVolume: function(val) {
+                this.sfxVolume = parseFloat(val);
+            },
+
             toggleMusicState: function() {
-                if (musicEnabled && document.getElementById('view-game').classList.contains('active')) {
+                if (this.bgmVolume > 0 && document.getElementById('view-game').classList.contains('active')) {
                     this.startMusic();
                 } else {
                     this.stopMusic();
@@ -509,9 +400,8 @@
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             
-            // Si on va sur le jeu, tenter la musique
             if (viewId === 'view-game') {
-                AudioEngine.init(); // Important pour activer l'audio context
+                AudioEngine.init();
                 AudioEngine.toggleMusicState();
             } else {
                 AudioEngine.stopMusic();
@@ -565,10 +455,6 @@
         // --- 3. VARIABLES JEU ---
         let peer, conn = null, myWord = "", friendWord = "", score = 0, readyMe = false, readyFriend = false;
         let isChatOpen = false, unreadCount = 0;
-        
-        // Paramètres audio chargés
-        let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
-        let musicEnabled = localStorage.getItem('musicEnabled') !== 'false';
 
         const els = {
             lobby: document.getElementById('view-lobby'),
@@ -638,7 +524,7 @@
                     if (!isChatOpen) {
                         unreadCount++;
                         updateBadge();
-                        AudioEngine.playChat(); // Son de notif chat
+                        AudioEngine.playChat(); // Son notif chat
                     }
                     addMsg(data.val, 'friend');
                 }
@@ -667,7 +553,6 @@
         }
 
         function revealCards() {
-            // Son de Carte qui tourne
             AudioEngine.playFlip();
 
             document.getElementById('me-word-back').innerText = myWord;
@@ -681,12 +566,12 @@
                 els.victory.innerText = "SYNCHRO !";
                 els.victory.className = "win";
                 els.btnNext.innerText = "Recommencer";
-                AudioEngine.playWin(); // Son Victoire
+                AudioEngine.playWin();
             } else {
                 els.victory.innerText = "";
                 els.victory.className = "";
                 els.btnNext.innerText = "Continuer";
-                AudioEngine.playLose(); // Son Défaite
+                AudioEngine.playLose();
             }
             els.btnNext.style.display = 'block';
         }
@@ -695,6 +580,7 @@
             readyMe = false; readyFriend = false; myWord = ""; friendWord = "";
             document.querySelector('#card-me .card-inner').classList.remove('flipped');
             document.querySelector('#card-friend .card-inner').classList.remove('flipped');
+            
             setTimeout(() => {
                 document.getElementById('me-word-front').innerText = "?";
                 document.getElementById('friend-word-front').innerText = "?";
@@ -749,6 +635,12 @@
             t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 3000);
         }
+
+        // --- Écouteur d'événements pour le volume en temps réel ---
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'sfxVolume') AudioEngine.updateSfxVolume(e.newValue);
+            if (e.key === 'musicVolume') AudioEngine.updateMusicVolume(e.newValue);
+        });
     </script>
 </body>
 </html>
