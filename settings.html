@@ -6,6 +6,7 @@
     <title>Paramètres - Arcade</title>
     
     <style>
+        /* --- STYLE --- */
         :root {
             --bg-color: #0f172a;
             --surface-color: #1e293b;
@@ -50,10 +51,15 @@
     </style>
 </head>
 <body>
+
     <div id="toast">Message</div>
 
+    <!-- MENU -->
     <div id="side-menu">
-        <div class="menu-header"><span>Arcade</span><button class="close-btn" onclick="toggleMenu()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">×</button></div>
+        <div class="menu-header">
+            <span>Arcade</span>
+            <button class="close-btn" onclick="toggleMenu()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">×</button>
+        </div>
         <ul class="menu-list" id="menu-list-container"></ul>
     </div>
     <div id="menu-overlay" onclick="toggleMenu()"></div>
@@ -68,24 +74,38 @@
         <div class="content">
             <div class="card">
                 <h3>Audio</h3>
-                <!-- Volume Effets : Défaut 10% -->
+                
+                <!-- Volume Effets (MAX par défaut) -->
                 <div class="setting-row">
-                    <div class="setting-label"><span>Volume Effets</span><span class="vol-value" id="val-sfx">10%</span></div>
-                    <input type="range" min="0" max="1" step="0.1" value="0.1" id="sfx-slider" oninput="updateSfx(this.value)">
+                    <div class="setting-label">
+                        <span>Volume Effets (Jeu / Chat)</span>
+                        <span class="vol-value" id="val-sfx">100%</span>
+                    </div>
+                    <input type="range" min="0" max="1" step="0.1" value="1" id="sfx-slider" oninput="updateSfx(this.value)">
                 </div>
-                <!-- Volume Musique : Défaut 10% -->
+                
+                <!-- Volume Musique (10% par défaut) -->
                 <div class="setting-row">
-                    <div class="setting-label"><span>Volume Musique</span><span class="vol-value" id="val-music">10%</span></div>
+                    <div class="setting-label">
+                        <span>Volume Musique</span>
+                        <span class="vol-value" id="val-music">10%</span>
+                    </div>
                     <input type="range" min="0" max="1" step="0.1" value="0.1" id="music-slider" oninput="updateMusic(this.value)">
                 </div>
-                <p style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">💡 Astuce : Mets un fichier nommé <strong>bgm.m4a</strong> dans le dossier GitHub.</p>
+
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">
+                    💡 Astuce : Mets un fichier nommé <strong>bgm.m4a</strong> dans le dossier GitHub.
+                </p>
             </div>
-            <div class="card" style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Version 1.3 (Ducking & Low Vol)</div>
+            
+            <div class="card" style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                Version 1.4 (SFX Max)
+            </div>
         </div>
     </div>
 
     <script>
-        // --- GESTION MENU ---
+        // --- GESTION MENU (Identique) ---
         async function initMenu() {
             const listContainer = document.getElementById('menu-list-container');
             listContainer.innerHTML = '<li style="padding:15px; color:#666; text-align:center;">Chargement...</li>';
@@ -97,8 +117,7 @@
                 menuData.forEach(item => {
                     const li = document.createElement('li'); li.className = 'menu-item';
                     const a = document.createElement('a');
-                    a.href = item.url;
-                    a.innerText = item.title;
+                    a.href = item.url; a.innerText = item.title;
                     if (item.title.includes("Paramètres")) a.classList.add('active');
                     li.appendChild(a);
                     listContainer.appendChild(li);
@@ -110,15 +129,26 @@
         function toggleMenu() {
             const menu = document.getElementById('side-menu');
             const overlay = document.getElementById('menu-overlay');
-            if (menu.classList.contains('open')) { menu.classList.remove('open'); overlay.classList.remove('show'); }
-            else { menu.classList.add('open'); overlay.classList.add('show'); }
+            if (menu.classList.contains('open')) {
+                menu.classList.remove('open');
+                overlay.classList.remove('show');
+            } else {
+                menu.classList.add('open');
+                overlay.classList.add('show');
+            }
         }
 
         // --- LOGIQUE PARAMÈTRES ---
-        // Par défaut 0.1 (10%)
-        let sfxVolume = parseFloat(localStorage.getItem('sfxVolume')) || 0.1;
+        let soundEnabled = true;
+        let musicEnabled = true;
+
+        // SFX Volume : 1.0 (100%) par défaut
+        let sfxVolume = parseFloat(localStorage.getItem('sfxVolume')) || 1.0;
+        
+        // Music Volume : 0.1 (10%) par défaut
         let musicVolume = parseFloat(localStorage.getItem('musicVolume')) || 0.1;
 
+        // Mise à jour des boutons visuels
         document.getElementById('sfx-slider').value = sfxVolume;
         document.getElementById('val-sfx').innerText = Math.round(sfxVolume * 100) + '%';
         
@@ -135,14 +165,17 @@
             musicVolume = parseFloat(val);
             document.getElementById('val-music').innerText = Math.round(musicVolume * 100) + '%';
             localStorage.setItem('musicVolume', musicVolume);
-            // Notifier la page de jeu pour changer le volume direct
+            // Notifier la page de jeu
             if(window.AudioEngine) {
                 window.AudioEngine.updateMusicVolume(musicVolume);
             }
         }
 
         function showToast(txt) {
-            const t = document.getElementById('toast'); t.innerText = txt; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000);
+            const t = document.getElementById('toast');
+            t.innerText = txt;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
         }
     </script>
 </body>
