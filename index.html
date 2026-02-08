@@ -7,6 +7,7 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     
     <style>
+        /* --- STYLE --- */
         :root { --bg-color: #0f172a; --surface-color: #1e293b; --surface-light: #334155; --primary: #8b5cf6; --secondary: #ec4899; --success: #10b981; --text-main: #f8fafc; --text-muted: #94a3b8; --radius: 16px; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
@@ -73,8 +74,12 @@
 
     <div id="toast">Message</div>
 
+    <!-- MENU -->
     <div id="side-menu">
-        <div class="menu-header"><span>Arcade</span><button class="close-btn" onclick="toggleMenu()">×</button></div>
+        <div class="menu-header">
+            <span>Arcade</span>
+            <button class="close-btn" onclick="toggleMenu()">×</button>
+        </div>
         <ul class="menu-list" id="menu-list-container"></ul>
     </div>
     <div id="menu-overlay" onclick="toggleMenu()"></div>
@@ -106,14 +111,28 @@
             <div class="game-board">
                 <div class="game-card" id="card-me">
                     <div class="card-inner">
-                        <div class="card-front"><span class="label">Moi</span><div class="word" id="me-word-front">?</div><div class="ready-indicator"></div></div>
-                        <div class="card-back"><span class="label">Mot</span><div class="word" id="me-word-back"></div></div>
+                        <div class="card-front">
+                            <span class="label">Moi</span>
+                            <div class="word" id="me-word-front">?</div>
+                            <div class="ready-indicator"></div>
+                        </div>
+                        <div class="card-back">
+                            <span class="label">Mot</span>
+                            <div class="word" id="me-word-back"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="game-card" id="card-friend">
                     <div class="card-inner">
-                        <div class="card-front"><span class="label">Ami</span><div class="word" id="friend-word-front">?</div><div class="ready-indicator"></div></div>
-                        <div class="card-back"><span class="label">Mot</span><div class="word" id="friend-word-back"></div></div>
+                        <div class="card-front">
+                            <span class="label">Ami</span>
+                            <div class="word" id="friend-word-front">?</div>
+                            <div class="ready-indicator"></div>
+                        </div>
+                        <div class="card-back">
+                            <span class="label">Mot</span>
+                            <div class="word" id="friend-word-back"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -126,20 +145,29 @@
     </div>
 
     <!-- CHAT -->
-    <button id="fab-chat" onclick="toggleChat()">💬<div id="chat-badge">0</div></button>
+    <button id="fab-chat" onclick="toggleChat()">
+        💬
+        <div id="chat-badge">0</div>
+    </button>
     <div id="chat-panel">
-        <div class="chat-header"><span>Chat</span><button class="close-btn" onclick="toggleChat()">×</button></div>
+        <div class="chat-header">
+            <span>Chat</span>
+            <button class="close-btn" onclick="toggleChat()">×</button>
+        </div>
         <div id="chat-messages"></div>
-        <div style="padding: 10px;"><input type="text" id="chat-input" placeholder="Msg..." onkeypress="if(event.key==='Enter') sendChat()"><button class="btn-primary" style="margin-top: 5px;" onclick="sendChat()">Envoyer</button></div>
+        <div style="padding: 10px;">
+            <input type="text" id="chat-input" placeholder="Msg..." onkeypress="if(event.key==='Enter') sendChat()">
+            <button class="btn-primary" style="margin-top: 5px;" onclick="sendChat()">Envoyer</button>
+        </div>
     </div>
 
     <script>
-        // --- 1. SYSTÈME AUDIO (Ducking + Volume 10%) ---
+        // --- 1. SYSTÈME AUDIO (SFX Max, Music 10%, Ducking) ---
         const AudioEngine = {
             ctx: null,
             bgmElement: document.getElementById('bgm-element'),
             bgmVolume: 0.1, // Défaut 10%
-            sfxVolume: 0.1, // Défaut 10%
+            sfxVolume: 1.0, // Défaut 100%
             isInitialized: false,
 
             init: function() {
@@ -147,10 +175,11 @@
                     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                     this.isInitialized = true;
                 }
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                
-                // Charger les préférences depuis localStorage (ou 0.1 si vide)
-                this.sfxVolume = parseFloat(localStorage.getItem('sfxVolume')) || 0.1;
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+                // Charger préférences (ou garder les defauts ci-dessus)
+                this.sfxVolume = parseFloat(localStorage.getItem('sfxVolume')) || 1.0;
                 this.bgmVolume = parseFloat(localStorage.getItem('musicVolume')) || 0.1;
                 
                 this.bgmElement.volume = this.bgmVolume;
@@ -165,7 +194,6 @@
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
                 
-                // Application du volume SFX
                 gain.gain.setValueAtTime(0.1 * this.sfxVolume * volMultiplier, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
                 
@@ -174,37 +202,32 @@
             },
 
             // Effets Jeu
-            playFlip: function() { this.playTone(400, 'triangle', 0.2, 1.5); this.playTone(600, 'sine', 0.2, 1.5); },
+            playFlip: function() { this.playTone(400, 'sine', 0.2, 1.5); this.playTone(600, 'triangle', 0.2, 1.5); },
             playWin: function() { 
                 this.playTone(523.25, 'sine', 0.6, 1.5); 
-                setTimeout(() => this.playTone(659.25, 'sine', 0.6, 1.5), 100); 
+                setTimeout(() => this.playTone(659.25, 'sine', 0.6, 1.5), 100);
                 setTimeout(() => this.playTone(783.99, 'sine', 0.8, 1.5), 200);
             },
             playLose: function() { this.playTone(200, 'sawtooth', 0.6, 2.0); },
 
             // Chat avec DUCKING (Baisse musique)
             playChat: function() {
-                // 1. Sauvegarder le volume actuel de la musique
                 const originalVolume = this.bgmElement.volume;
-
-                // 2. Baisser la musique à 20% pour mieux entendre le message
+                // Baisse à 20%
                 this.bgmElement.volume = originalVolume * 0.2;
-
-                // 3. Jouer le son du chat (un peu plus fort pour être audible malgré la basse)
+                // Son un peu plus fort (x1.5) pour être audible
                 this.playTone(800, 'square', 0.1, 1.5); 
-
-                // 4. Restaurer le volume après que le son est fini (300ms)
+                // Remonte après 300ms
                 setTimeout(() => {
                     this.bgmElement.volume = originalVolume;
                 }, 300);
             },
 
-            // Musique de fond
             startMusic: function() {
                 if (this.bgmVolume <= 0) return;
                 this.bgmElement.src = 'bgm.m4a';
                 this.bgmElement.volume = this.bgmVolume;
-                this.bgmElement.onerror = () => { console.log("Erreur musique"); this.stopMusic(); };
+                this.bgmElement.onerror = () => { console.log("Fichier bgm.m4a introuvable."); this.stopMusic(); };
                 const playPromise = this.bgmElement.play();
                 if (playPromise !== undefined) { playPromise.catch(e => console.error(e)); }
             },
@@ -235,6 +258,7 @@
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
+            
             if (viewId === 'view-game') {
                 AudioEngine.init();
                 AudioEngine.toggleMusicState();
@@ -252,10 +276,12 @@
                 const menuData = await response.json();
                 listContainer.innerHTML = '';
                 menuData.forEach(item => {
-                    const li = document.createElement('li'); li.className = 'menu-item';
+                    const li = document.createElement('li');
+                    li.className = 'menu-item';
                     const a = document.createElement('a');
                     a.href = item.url;
                     a.innerText = item.title;
+                    if (item.title.includes("Paramètres")) a.classList.add('active');
                     if (item.url.startsWith('#')) {
                         a.addEventListener('click', (e) => {
                             e.preventDefault();
@@ -286,14 +312,22 @@
         // --- 3. VARIABLES JEU ---
         let peer, conn = null, myWord = "", friendWord = "", score = 0, readyMe = false, readyFriend = false;
         let isChatOpen = false, unreadCount = 0;
+        
         const els = {
-            lobby: document.getElementById('view-lobby'), game: document.getElementById('view-game'),
-            myId: document.getElementById('my-id'), friendId: document.getElementById('friend-id'),
-            gameInput: document.getElementById('game-input'), btnReady: document.getElementById('btn-ready'),
-            btnNext: document.getElementById('btn-next'), score: document.getElementById('score'),
-            victory: document.getElementById('victory-text'), meCard: document.getElementById('card-me'),
-            friendCard: document.getElementById('card-friend'), chatPanel: document.getElementById('chat-panel'),
-            chatMsgs: document.getElementById('chat-messages'), chatInput: document.getElementById('chat-input'),
+            lobby: document.getElementById('view-lobby'),
+            game: document.getElementById('view-game'),
+            myId: document.getElementById('my-id'),
+            friendId: document.getElementById('friend-id'),
+            gameInput: document.getElementById('game-input'),
+            btnReady: document.getElementById('btn-ready'),
+            btnNext: document.getElementById('btn-next'),
+            score: document.getElementById('score'),
+            victory: document.getElementById('victory-text'),
+            meCard: document.getElementById('card-me'),
+            friendCard: document.getElementById('card-friend'),
+            chatPanel: document.getElementById('chat-panel'),
+            chatMsgs: document.getElementById('chat-messages'),
+            chatInput: document.getElementById('chat-input'),
             badge: document.getElementById('chat-badge')
         };
 
@@ -308,7 +342,8 @@
             try {
                 peer = new Peer(shortId);
                 peer.on('open', (id) => {
-                    els.myId.value = id; els.myId.classList.add('loaded');
+                    els.myId.value = id;
+                    els.myId.classList.add('loaded');
                     showToast("Code généré : " + id);
                 });
                 peer.on('error', (err) => {
@@ -316,7 +351,11 @@
                     else if (err.type === 'peer-unavailable') alert("Ami hors ligne");
                     else els.myId.value = "Erreur";
                 });
-                peer.on('connection', (c) => { conn = c; setupConn(); showView('view-game'); });
+                peer.on('connection', (c) => {
+                    conn = c;
+                    setupConn();
+                    showView('view-game');
+                });
             } catch(e) { setTimeout(initShortPeer, 2000); }
         }
         initShortPeer();
@@ -333,14 +372,16 @@
         function setupConn() {
             conn.on('data', (data) => {
                 if (data.type === 'WORD') {
-                    friendWord = data.val; readyFriend = true;
+                    friendWord = data.val;
+                    readyFriend = true;
                     els.friendCard.classList.add('ready');
                     document.getElementById('friend-word-front').innerText = "PRÊT";
                     checkReady();
                 } else if (data.type === 'CHAT') {
                     if (!isChatOpen) {
-                        unreadCount++; updateBadge();
-                        AudioEngine.playChat(); // Appelle le Ducking ici
+                        unreadCount++;
+                        updateBadge();
+                        AudioEngine.playChat();
                     }
                     addMsg(data.val, 'friend');
                 }
@@ -356,12 +397,17 @@
 
         function sendWord() {
             if(!conn) return;
-            readyMe = true; els.meCard.classList.add('ready');
-            els.gameInput.disabled = true; els.btnReady.style.display = 'none';
-            conn.send({ type: 'WORD', val: myWord }); checkReady();
+            readyMe = true;
+            els.meCard.classList.add('ready');
+            els.gameInput.disabled = true;
+            els.btnReady.style.display = 'none';
+            conn.send({ type: 'WORD', val: myWord });
+            checkReady();
         }
 
-        function checkReady() { if (readyMe && readyFriend) setTimeout(revealCards, 500); }
+        function checkReady() {
+            if (readyMe && readyFriend) setTimeout(revealCards, 500);
+        }
 
         function revealCards() {
             document.getElementById('me-word-back').innerText = myWord;
@@ -370,12 +416,15 @@
             document.querySelector('#card-friend .card-inner').classList.add('flipped');
 
             if (myWord.toLowerCase() === friendWord.toLowerCase()) {
-                score++; els.score.innerText = score;
-                els.victory.innerText = "SYNCHRO !"; els.victory.className = "win";
+                score++;
+                els.score.innerText = score;
+                els.victory.innerText = "SYNCHRO !";
+                els.victory.className = "win";
                 els.btnNext.innerText = "Recommencer";
                 AudioEngine.playWin();
             } else {
-                els.victory.innerText = ""; els.victory.className = "";
+                els.victory.innerText = "";
+                els.victory.className = "";
                 els.btnNext.innerText = "Continuer";
                 AudioEngine.playLose();
             }
@@ -383,21 +432,29 @@
         }
 
         function resetRound() {
-            readyMe = false; readyFriend = false; myWord = ""; friendWord = "";
+            readyMe = false;
+            readyFriend = false;
+            myWord = "";
+            friendWord = "";
             document.querySelector('#card-me .card-inner').classList.remove('flipped');
             document.querySelector('#card-friend .card-inner').classList.remove('flipped');
             setTimeout(() => {
                 document.getElementById('me-word-front').innerText = "?";
                 document.getElementById('friend-word-front').innerText = "?";
-                els.gameInput.value = ""; els.gameInput.disabled = false;
-                els.btnReady.style.display = 'block'; els.btnReady.disabled = true;
+                els.gameInput.value = "";
+                els.gameInput.disabled = false;
+                els.btnReady.style.display = 'block';
+                els.btnReady.disabled = true;
                 els.btnNext.style.display = 'none';
-                els.meCard.classList.remove('ready'); els.friendCard.classList.remove('ready');
-                els.victory.style.display = 'none'; els.victory.className = "";
+                els.meCard.classList.remove('ready');
+                els.friendCard.classList.remove('ready');
+                els.victory.style.display = 'none';
+                els.victory.className = "";
                 els.gameInput.focus();
             }, 300);
         }
 
+        // --- CHAT ---
         function toggleChat() { 
             isChatOpen = !isChatOpen;
             els.chatPanel.classList.toggle('open'); 
@@ -414,24 +471,33 @@
 
         function addMsg(txt, who) {
             const d = document.createElement('div');
-            d.className = `msg msg-${who}`; d.innerText = txt;
+            d.className = `msg msg-${who}`;
+            d.innerText = txt;
             els.chatMsgs.appendChild(d);
             els.chatMsgs.scrollTop = els.chatMsgs.scrollHeight;
         }
 
         function updateBadge() {
-            if (unreadCount > 0) { els.badge.innerText = unreadCount; els.badge.style.display = 'flex'; }
-            else { els.badge.style.display = 'none'; }
+            if (unreadCount > 0) {
+                els.badge.innerText = unreadCount;
+                els.badge.style.display = 'flex';
+            } else {
+                els.badge.style.display = 'none';
+            }
         }
 
         function showToast(txt) {
             const t = document.getElementById('toast');
-            t.innerText = txt; t.classList.add('show');
+            t.innerText = txt;
+            t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        // Exposer AudioEngine pour Settings
-        window.AudioEngine = AudioEngine;
+        // --- Écouteur d'événements storage ---
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'sfxVolume') AudioEngine.updateSfxVolume(e.newValue);
+            if (e.key === 'musicVolume') AudioEngine.updateMusicVolume(e.newValue);
+        });
     </script>
 </body>
 </html>
