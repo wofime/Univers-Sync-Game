@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Paramètres - Arcade</title>
+    
+    <style>
+        /* --- STYLE COMMUN --- */
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --surface-light: #334155;
+            --primary: #8b5cf6;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-color);
+        }
+
+        /* --- HEADER --- */
+        header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--surface-light);
+            flex-shrink: 0;
+            z-index: 20;
+            position: relative;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        .logo { 
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+            flex-grow: 1; 
+            text-align: center;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+
+        /* --- CONTENT --- */
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--surface-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--surface-light);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        h3 { margin-top: 0; color: var(--text-main); }
+
+        /* --- TOGGLE SWITCH --- */
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            font-size: 1.1rem;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--surface-light);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* --- MENU --- */
+        #side-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100%;
+            background: var(--surface-color);
+            transform: translateX(-100%); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 40; 
+            display: flex;
+            flex-direction: column;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+        }
+        #side-menu.open { transform: translateX(0); }
+
+        .menu-header {
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .menu-list { list-style: none; padding: 0; margin: 0; flex: 1; overflow-y: auto; }
+
+        .menu-item a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-main);
+            text-decoration: none;
+            border-bottom: 1px solid var(--surface-light);
+            transition: background 0.2s;
+            font-size: 1rem;
+        }
+        .menu-item a:hover { background: var(--surface-light); }
+        .menu-item a.active { color: var(--primary); border-left: 4px solid var(--primary); background: rgba(139, 92, 246, 0.1); }
+
+        #menu-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 35;
+            display: none; opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #menu-overlay.show { display: block; opacity:1; }
+
+        #toast {
+            position: fixed;
+            top: 20px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-light);
+            padding: 10px 20px; border-radius: 20px;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 100;
+        }
+        #toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div id="toast">Message</div>
+
+    <!-- MENU -->
+    <div id="side-menu">
+        <div class="menu-header">
+            <span>Arcade</span>
+            <button class="close-btn" onclick="toggleMenu()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">×</button>
+        </div>
+        <ul class="menu-list" id="menu-list-container"></ul>
+    </div>
+    <div id="menu-overlay" onclick="toggleMenu()"></div>
+
+    <div id="app-container">
+        <header>
+            <button class="menu-btn" onclick="toggleMenu()">☰</button>
+            <div class="logo">Paramètres</div>
+            <div style="width: 50px;"></div> 
+        </header>
+
+        <div class="content">
+            <div class="card">
+                <h3>Audio</h3>
+                
+                <div class="setting-row">
+                    <span>Sons du jeu</span>
+                    <label class="switch">
+                        <input type="checkbox" id="sound-toggle" onchange="toggleSound()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <span>Musique de fond</span>
+                    <label class="switch">
+                        <input type="checkbox" id="music-toggle" onchange="toggleMusic()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="card" style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                Version 1.1
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GESTION MENU (Identique) ---
+        async function initMenu() {
+            const listContainer = document.getElementById('menu-list-container');
+            listContainer.innerHTML = '<li style="padding:15px; color:#666; text-align:center;">Chargement...</li>';
+            try {
+                const response = await fetch('menu.json');
+                if (!response.ok) throw new Error("Fichier non trouvé");
+                const menuData = await response.json();
+                listContainer.innerHTML = '';
+
+                menuData.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'menu-item';
+                    const a = document.createElement('a');
+                    a.href = item.url;
+                    a.innerText = item.title;
+                    if (item.title.includes("Paramètres")) a.classList.add('active');
+                    li.appendChild(a);
+                    listContainer.appendChild(li);
+                });
+            } catch (error) {
+                listContainer.innerHTML = '<li style="padding:15px; color:red; text-align:center;">Erreur menu</li>';
+            }
+        }
+        initMenu();
+
+        function toggleMenu() {
+            const menu = document.getElementById('side-menu');
+            const overlay = document.getElementById('menu-overlay');
+            if (menu.classList.contains('open')) {
+                menu.classList.remove('open');
+                overlay.classList.remove('show');
+            } else {
+                menu.classList.add('open');
+                overlay.classList.add('show');
+            }
+        }
+
+        // --- GESTION PARAMÈTRES ---
+        let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+        let musicEnabled = localStorage.getItem('musicEnabled') !== 'false';
+
+        document.getElementById('sound-toggle').checked = soundEnabled;
+        document.getElementById('music-toggle').checked = musicEnabled;
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('soundEnabled', soundEnabled);
+            showToast("Sons " + (soundEnabled ? "activés" : "désactivés"));
+        }
+
+        function toggleMusic() {
+            musicEnabled = !musicEnabled;
+            localStorage.setItem('musicEnabled', musicEnabled);
+            showToast("Musique " + (musicEnabled ? "activée" : "désactivée"));
+        }
+
+        function showToast(txt) {
+            const t = document.getElementById('toast');
+            t.innerText = txt;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+    </script>
+</body>
+</html>
