@@ -18,26 +18,97 @@
             --text-muted: #94a3b8;
             --radius: 16px;
         }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body {
-            font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-main);
-            margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
         }
-        #app-container { width: 100%; max-width: 480px; height: 100vh; display: flex; flex-direction: column; position: relative; background: var(--bg-color); }
-        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid var(--surface-light); flex-shrink: 0; z-index: 20; position: relative; }
-        .menu-btn { background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; padding: 0; margin: 0; flex-shrink: 0; }
-        .logo { font-size: 1.1rem; font-weight: bold; color: var(--primary); flex-grow: 1; text-align: center; }
+
+        #app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-color);
+        }
+
+        /* --- HEADER (Grid Layout) --- */
+        header {
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: auto 1fr auto; /* Sandwich - Centre - Vide */
+            align-items: center;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--surface-light);
+            flex-shrink: 0;
+            z-index: 20;
+            position: relative;
+        }
+
+        .menu-btn {
+            background: none; 
+            border: none; 
+            color: var(--text-main); 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+            padding: 0; 
+            margin: 0; 
+            justify-self: start; /* Colonne 1 : Gauche */
+            grid-column: 1;
+        }
+
+        .logo { 
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+            text-align: center; 
+            justify-self: center; /* Colonne 2 : Milieu */
+            grid-column: 2;
+        }
+
+        /* Placeholder vide pour équilibrer la grille (Colonne 3) */
+        .header-spacer { width: 50px; justify-self: end; }
+
+        /* --- CONTENT --- */
         .content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
         .card { background: var(--surface-color); border-radius: var(--radius); padding: 20px; border: 1px solid var(--surface-light); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         h3 { margin-top: 0; color: var(--text-main); }
+
+        /* --- SLIDERS --- */
         .setting-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
         .setting-label { display: flex; justify-content: space-between; font-size: 1.1rem; }
         .vol-value { color: var(--primary); font-weight: bold; }
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; margin-top: -8px; box-shadow: 0 0 5px rgba(0,0,0,0.3); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--surface-light); border-radius: 2px; }
+
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%;
+            background: var(--primary); cursor: pointer; margin-top: -8px; box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer; background: var(--surface-light); border-radius: 2px;
+        }
         input[type=range]:focus { outline: none; }
-        #side-menu { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background: var(--surface-color); transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 40; display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
+
+        /* --- MENU --- */
+        #side-menu {
+            position: fixed; top: 0; left: 0; width: 280px; height: 100%;
+            background: var(--surface-color); transform: translateX(-100%); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 40; 
+            display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+        }
         #side-menu.open { transform: translateX(0); }
         .menu-header { padding: 20px; background: var(--primary); color: white; font-weight: bold; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; }
         .menu-list { list-style: none; padding: 0; margin: 0; flex: 1; overflow-y: auto; }
@@ -66,25 +137,30 @@
 
     <div id="app-container">
         <header>
+            <!-- 1. Bouton Menu (Gauche) -->
             <button class="menu-btn" onclick="toggleMenu()">☰</button>
-            <div class="logo">Paramètres</div>
-            <div style="width: 50px;"></div> 
+            
+            <!-- 2. Titre "MindSync" (Centre) -->
+            <div class="logo">MindSync</div>
+            
+            <!-- 3. Espace vide pour la grille (Droite) -->
+            <div class="header-spacer"></div> 
         </header>
 
         <div class="content">
             <div class="card">
                 <h3>Audio</h3>
                 
-                <!-- Volume Effets (MAX par défaut) -->
+                <!-- Volume Effets -->
                 <div class="setting-row">
                     <div class="setting-label">
                         <span>Volume Effets (Jeu / Chat)</span>
-                        <span class="vol-value" id="val-sfx">100%</span>
+                        <span class="vol-value" id="val-sfx">10%</span>
                     </div>
-                    <input type="range" min="0" max="1" step="0.1" value="1" id="sfx-slider" oninput="updateSfx(this.value)">
+                    <input type="range" min="0" max="1" step="0.1" value="0.1" id="sfx-slider" oninput="updateSfx(this.value)">
                 </div>
                 
-                <!-- Volume Musique (10% par défaut) -->
+                <!-- Volume Musique -->
                 <div class="setting-row">
                     <div class="setting-label">
                         <span>Volume Musique</span>
@@ -94,18 +170,18 @@
                 </div>
 
                 <p style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">
-                    💡 Astuce : Mets un fichier nommé <strong>bgm.m4a</strong> dans le dossier GitHub.
+                    💡 Astuce : Mets un fichier nommé <strong>bgm.m4a</strong> dans le dossier GitHub pour changer la musique.
                 </p>
             </div>
             
             <div class="card" style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-                Version 1.4 (SFX Max)
+                Version 1.5 (Grid Layout)
             </div>
         </div>
     </div>
 
     <script>
-        // --- GESTION MENU (Identique) ---
+        // --- GESTION MENU ---
         async function initMenu() {
             const listContainer = document.getElementById('menu-list-container');
             listContainer.innerHTML = '<li style="padding:15px; color:#666; text-align:center;">Chargement...</li>';
@@ -115,14 +191,18 @@
                 const menuData = await response.json();
                 listContainer.innerHTML = '';
                 menuData.forEach(item => {
-                    const li = document.createElement('li'); li.className = 'menu-item';
+                    const li = document.createElement('li');
+                    li.className = 'menu-item';
                     const a = document.createElement('a');
-                    a.href = item.url; a.innerText = item.title;
+                    a.href = item.url;
+                    a.innerText = item.title;
                     if (item.title.includes("Paramètres")) a.classList.add('active');
                     li.appendChild(a);
                     listContainer.appendChild(li);
                 });
-            } catch (error) { listContainer.innerHTML = '<li style="padding:15px; color:red; text-align:center;">Erreur menu</li>'; }
+            } catch (error) {
+                listContainer.innerHTML = '<li style="padding:15px; color:red; text-align:center;">Erreur menu</li>';
+            }
         }
         initMenu();
 
@@ -139,16 +219,12 @@
         }
 
         // --- LOGIQUE PARAMÈTRES ---
-        let soundEnabled = true;
-        let musicEnabled = true;
-
-        // SFX Volume : 1.0 (100%) par défaut
-        let sfxVolume = parseFloat(localStorage.getItem('sfxVolume')) || 1.0;
         
-        // Music Volume : 0.1 (10%) par défaut
+        // Par défaut 0.1 (10%)
+        let sfxVolume = parseFloat(localStorage.getItem('sfxVolume')) || 0.1;
         let musicVolume = parseFloat(localStorage.getItem('musicVolume')) || 0.1;
 
-        // Mise à jour des boutons visuels
+        // Mettre à jour les boutons visuels
         document.getElementById('sfx-slider').value = sfxVolume;
         document.getElementById('val-sfx').innerText = Math.round(sfxVolume * 100) + '%';
         
